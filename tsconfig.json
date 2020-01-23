@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "lib": [
+          "esnext", "dom"
+        ],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es5",
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "alwaysStrict": true,
+        "noImplicitReturns": true,
+        "strictFunctionTypes": true,
+        "allowJs": true
+    },
+    "include": ["./*.ts"]
+}
