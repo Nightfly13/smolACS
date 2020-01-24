@@ -3,7 +3,7 @@ import * as cluster from "./cluster";
 import * as zlib from "zlib";
 import * as endfuncs from "./endfuncs"
 import * as parsefuncs from "./parsefuncs"
-import {Element, SoapMessage, InformRequest} from "./interfaces"
+import {Element, SoapMessage, InformRequest, CpeFault, FaultStruct, SpvFault, AcsResponse, CpeGetResponse, CpeSetResponse} from "./interfaces"
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
@@ -279,19 +279,24 @@ function request(body: string, cwmpVersion, warn): SoapMessage {
   /**
    * assign function based on method element recieved
    */
+
+  console.info({ //logs stuff
+    message: "request method is " + methodElement.localName,
+    pid: process.pid,
+  });
   switch (methodElement.localName) {
     case "Inform":
       rpc.cpeRequest = Inform(methodElement);
       break;
-    /*case "GetRPCMethods":
+    case "GetRPCMethods":
       rpc.cpeRequest = GetRPCMethods();
       break;
-    case "TransferComplete":
+    /*case "TransferComplete":
       rpc.cpeRequest = TransferComplete(methodElement);
       break;
     case "RequestDownload":
       rpc.cpeRequest = RequestDownload(methodElement);
-      break;
+      break;*/
     case "GetParameterNamesResponse":
       rpc.cpeResponse = GetParameterNamesResponse(methodElement);
       break;
@@ -300,7 +305,7 @@ function request(body: string, cwmpVersion, warn): SoapMessage {
       break;
     case "SetParameterValuesResponse":
       rpc.cpeResponse = SetParameterValuesResponse(methodElement);
-      break;
+      break;/*
     case "AddObjectResponse":
       rpc.cpeResponse = AddObjectResponse(methodElement);
       break;
@@ -315,10 +320,10 @@ function request(body: string, cwmpVersion, warn): SoapMessage {
       break;
     case "DownloadResponse":
       rpc.cpeResponse = DownloadResponse(methodElement);
-      break;
+      break;*/
     case "Fault":
       rpc.cpeFault = fault(methodElement);
-      break;*/
+      break;
     default:
       throw new Error(`8000 Method not supported ${methodElement.localName}`);
   }
@@ -425,4 +430,118 @@ function parameterValueList(
 
       return [param, parsed, valueType];//return array with name, value and value type
     });
+}
+
+function parameterInfoList(xml: Element): [string, boolean][] {
+  return xml.children
+    .filter(e => e.localName === "ParameterInfoStruct")
+    .map<[string, boolean]>(e => {
+      let param: string, value: string;
+      for (const c of e.children) {
+        switch (c.localName) {
+          case "Name":
+            param = c.text;
+            break;
+          case "Writable":
+            value = c.text;
+            break;
+        }
+      }
+
+      let parsed: boolean = parsefuncs.parseBool(value);
+
+      if (parsed === null) {
+        warnings.push({
+          message: "Invalid writable attribute",
+          parameter: param
+        });
+        parsed = false;
+      }
+
+      return [param, parsed];
+    });
+}
+
+function fault(xml: Element): CpeFault {
+  let faultCode, faultString, detail;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "faultcode":
+        faultCode = c.text;
+        break;
+      case "faultstring":
+        faultString = parsefuncs.decodeEntities(c.text);
+        break;
+      case "detail":
+        detail = faultStruct(c.children.find(n => n.localName === "Fault"));
+        break;
+    }
+  }
+
+  return { faultCode, faultString, detail };
+}
+
+function faultStruct(xml: Element): FaultStruct {
+  let faultCode, faultString, setParameterValuesFault: SpvFault[], pn, fc, fs;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "FaultCode":
+        faultCode = c.text;
+        break;
+      case "FaultString":
+        faultString = parsefuncs.decodeEntities(c.text);
+        break;
+      case "SetParameterValuesFault":
+        setParameterValuesFault = setParameterValuesFault || [];
+        for (const cc of c.children) {
+          switch (cc.localName) {
+            case "ParameterName":
+              pn = cc.text;
+              break;
+            case "FaultCode":
+              fc = cc.text;
+              break;
+            case "FaultString":
+              fs = parsefuncs.decodeEntities(cc.text);
+              break;
+          }
+        }
+        setParameterValuesFault.push({
+          parameterName: pn,
+          faultCode: fc,
+          faultString: fs
+        });
+    }
+  }
+
+  return { faultCode, faultString, setParameterValuesFault };
+}
+
+function GetRPCMethods(): AcsResponse {
+  return { name: "GetRPCMethods" };
+}
+
+function GetParameterNamesResponse(xml): CpeGetResponse {
+  return {
+    name: "GetParameterNamesResponse",
+    parameterList: parameterInfoList(
+      xml.children.find(n => n.localName === "ParameterList")
+    )
+  };
+}
+
+function GetParameterValuesResponse(xml: Element): CpeGetResponse {
+  return {
+    name: "GetParameterValuesResponse",
+    parameterList: parameterValueList(
+      xml.children.find(n => n.localName === "ParameterList")
+    )
+  };
+}
+
+function SetParameterValuesResponse(xml: Element): CpeSetResponse {
+  return {
+    name: "SetParameterValuesResponse",
+    status: parseInt(xml.children.find(n => n.localName === "Status").text)
+  };
 }
