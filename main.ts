@@ -1,23 +1,11 @@
 import * as http from "http";
-import { ChildProcess } from "child_process";
 import * as cluster from "./cluster";
 import * as zlib from "zlib";
-
+import * as endfuncs from "./endfuncs"
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
 const SERVICE_PORT = "7547"; // get port from config
-const processes: { [script: string]: ChildProcess } = {};
-
-
-/**
- * Shuts down worker ungracefully
- */
-function exitWorkerUngracefully(): void {
-  killAll().then(() => {
-    process.exit(1);
-  });
-}
 
 if (!cluster.worker) { //If the current worker is master
   const WORKER_COUNT = 0; //get worker count from config
@@ -55,7 +43,7 @@ if (!cluster.worker) { //If the current worker is master
       exception: err,
       pid: process.pid
     });
-    exitWorkerUngracefully
+    endfuncs.exitWorkerUngracefully
   });
 
   Sstart(
@@ -67,47 +55,12 @@ if (!cluster.worker) { //If the current worker is master
   );
 
   process.on("SIGINT", () => {
-    exitWorkerUngracefully
+    endfuncs.exitWorkerUngracefully
   });
 
   process.on("SIGTERM", () => {
-    exitWorkerUngracefully
+    endfuncs.exitWorkerUngracefully
   });
-}
-
-/**
- * kills a child process 
- * @param process 
- */
-function kill(process: ChildProcess): Promise<void> {
-  return new Promise(resolve => {
-    const timeToKill = Date.now() + 5000;
-
-    process.kill(); //kill process
-
-    const t = setInterval(() => { //set an interval for every 100ms
-      if (!process.connected) { //if process is dead
-        clearInterval(t); //clear the interval
-        resolve(); //resolve promise
-      } else if (Date.now() > timeToKill) { //otherwise, if time to kill ran out
-        process.kill("SIGKILL"); //hardkill process
-        clearInterval(t); //clear the intercal
-        resolve(); //resolve promise
-      }
-    }, 100);
-  });
-}
-
-/**
- * kill all active processes
- */
-async function killAll(): Promise<void> {
-  await Promise.all(
-    Object.entries(processes).map(([k, p]) => {
-      delete processes[k];
-      return kill(p);
-    })
-  );
 }
 
 let server: http.Server
