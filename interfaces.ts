@@ -5,6 +5,13 @@ export interface Attribute {
     value: string;
 }
 
+export interface CpeGetResponse extends CpeResponse {
+    name: "GetParameterNamesResponse" | "GetParameterValuesResponse";
+    parameterList?:
+    | [string, boolean][]
+    | [string, string | number | boolean, string][];
+}
+
 export interface Element {
     name: string;
     namespace: string;
@@ -16,7 +23,7 @@ export interface Element {
 }
 
 export interface CpeRequest {
-name: string;
+    name: string;
     fileType?: string;
 }
 
@@ -54,13 +61,32 @@ export interface SoapMessage {
 export interface InformRequest extends CpeRequest {
     name: "Inform";
     deviceId: {
-      Manufacturer: string;
-      OUI: string;
-      ProductClass?: string;
-      SerialNumber: string;
+        Manufacturer: string;
+        OUI: string;
+        ProductClass?: string;
+        SerialNumber: string;
     };
     event: string[];
     retryCount: number;
     parameterList: [string, string | number | boolean, string][];
-  }
-  
+}
+
+export interface AcsResponse {
+    name: string;
+    commandKey?: string;
+    faultStruct?: FaultStruct;
+}
+
+export interface CpeSetResponse extends CpeResponse {
+    name:
+    | "SetParameterValuesResponse"
+    | "AddObjectResponse"
+    | "DeleteObjectResponse"
+    | "RebootResponse"
+    | "FactoryResetResponse"
+    | "DownloadResponse";
+    status?: number;
+    instanceNumber?: string;
+    startTime?: number;
+    completeTime?: number;
+}
