@@ -108,6 +108,13 @@ async function CWlistner(httpRequest, httpResponse) {
   }
   //#endregion
 
+  //If request is empty (no more RPCs from CPE)
+  if(httpRequest.headers["content-length"] == "0"){
+    httpResponse.writeHead(200, {});
+    httpResponse.end()
+    return;
+  }
+
   //#region Decode request if encoded
   let stream = httpRequest;
   if (httpRequest.headers["content-encoding"]) {//if request has content eencoding, then try to decode it
@@ -174,6 +181,8 @@ async function CWlistner(httpRequest, httpResponse) {
     null,
     parseWarnings
   );
+
+  httpResponse.setHeader('Content-Type', 'text/xml');
   httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">w0e9ylwq</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
   httpResponse.end(); //end the response
 }
