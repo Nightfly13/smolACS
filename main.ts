@@ -127,13 +127,11 @@ export function Sstart(
   port,
   networkInterface,
   _listener,
-  onConnection?,
   keepAliveTimeout: number = -1
 ): void {
   listener = _listener;
 
   server = http.createServer(listener);
-  if (onConnection != null) server.on("connection", onConnection);
 
   if (keepAliveTimeout >= 0) server.keepAliveTimeout = keepAliveTimeout;
   server.listen(port, networkInterface);
