@@ -172,7 +172,7 @@ async function CWlistner(httpRequest, httpResponse) {
   }
   //#endregion
 
-  const bodyStr = decodeString(body, charset);//decode body
+  const bodyStr = parsefuncs.decodeString(body, charset);//decode body
 
   const parseWarnings = [];
   let rpc;
@@ -185,15 +185,6 @@ async function CWlistner(httpRequest, httpResponse) {
   httpResponse.setHeader('Content-Type', 'text/xml');
   httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">w0e9ylwq</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
   httpResponse.end(); //end the response
-}
-
-/**
- * Returns the buffer decoded using charset
- * @param buffer encoded buffer
- * @param charset 
- */
-function decodeString(buffer: Buffer, charset: string): string {
-  return buffer.toString(charset);
 }
 
 /**
@@ -239,7 +230,7 @@ function request(body: string, cwmpVersion, warn): SoapMessage {
     for (const c of headerElement.children) {
       switch (c.localName) {
         case "ID"://find the ID
-          rpc.id = decodeEntities(c.text);
+          rpc.id = parsefuncs.decodeEntities(c.text);
           break;
         case "sessionTimeout":
           rpc.sessionTimeout = parseInt(c.text);
@@ -336,43 +327,6 @@ function request(body: string, cwmpVersion, warn): SoapMessage {
 }
 
 /**
- * Decodes the encoded entities (if there are any)
- * @param string 
- */
-function decodeEntities(string): string {
-  return string.replace(/&[0-9a-z#]+;/gi, match => {
-    switch (match) {
-      case "&quot;":
-        return '"';
-
-      case "&amp;":
-        return "&";
-
-      case "&apos;":
-        return "'";
-
-      case "&lt;":
-        return "<";
-
-      case "&gt;":
-        return ">";
-
-      default:
-        if (match.startsWith("&#x")) {
-          const str = match.slice(3, -1).toLowerCase();
-          const n = parseInt(str, 16);
-          if (str.endsWith(n.toString(16))) return String.fromCharCode(n);
-        } else if (match.startsWith("&#")) {
-          const str = match.slice(2, -1);
-          const n = parseInt(str);
-          if (str.endsWith(n.toString())) return String.fromCharCode(n);
-        }
-    }
-    return match;
-  });
-}
-
-/**
  * returns object with name, parameter list, device ID, event and retry counter
  * @param xml inform xml object
  */
@@ -393,11 +347,11 @@ function Inform(xml: Element): InformRequest {
       case "DeviceId"://set values of deviceId
         for (const cc of c.children) {
           const n = cc.localName;
-          if (n in deviceId) deviceId[n] = decodeEntities(cc.text);
+          if (n in deviceId) deviceId[n] = parsefuncs.decodeEntities(cc.text);
         }
         break;
       case "Event"://set evnt equal to the event code of the xml
-        evnt = event(c);
+        evnt = parsefuncs.event(c);
         break;
       case "RetryCount"://sets the retry counter
         retryCount = parseInt(c.text);
@@ -412,16 +366,6 @@ function Inform(xml: Element): InformRequest {
     event: evnt,
     retryCount: retryCount
   };
-}
-
-/**
- * returns event code
- * @param xml event struct
- */
-function event(xml: Element): string[] {
-  return xml.children
-    .filter(n => n.localName === "EventStruct")
-    .map(c => c.children.find(n => n.localName === "EventCode").text.trim());
 }
 
 /**
@@ -446,12 +390,12 @@ function parameterValueList(
         }
       }
 
-      const valueType = getValueType(valueElement.attrs);//get value type
+      const valueType = parsefuncs.getValueType(valueElement.attrs);//get value type
 
-      const value = decodeEntities(valueElement.text);//decodes entities and saves results in value
+      const value = parsefuncs.decodeEntities(valueElement.text);//decodes entities and saves results in value
       let parsed: string | number | boolean = value;
       if (valueType === "xsd:boolean") {//if the valueType is boolean
-        parsed = parseBool(value); //get the value
+        parsed = parsefuncs.parseBool(value); //get the value
         if (parsed === null) {//check if invalid and add warning
           warnings.push({
             message: "Invalid value attribute",
@@ -481,20 +425,4 @@ function parameterValueList(
 
       return [param, parsed, valueType];//return array with name, value and value type
     });
-}
-
-/**
- * checks if true or false and returns appropriately 
- * @param v 
- */
-function parseBool(v): boolean {
-  v = "" + v;
-  if (v === "true" || v === "TRUE" || v === "True" || v === "1") return true;
-  else if (v === "false" || v === "FALSE" || v === "False" || v === "0")
-    return false;
-  else return null;
-}
-
-function getValueType(str): string {
-  return parsefuncs.parseAttrs(str).find(s => s.localName === "type").value.trim()
 }
