@@ -1,5 +1,5 @@
 
-import cluster from "cluster";
+import * as cluster from "cluster";
 import { cpus } from "os";
 
 let respawnTimestamp = 0;
