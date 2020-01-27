@@ -1,4 +1,4 @@
-import {Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse} from "./interfaces"
+import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse } from "./interfaces"
 import * as soap from "./soap"
 import * as parseFuncs from "./parseFuncs"
 /**
@@ -90,4 +90,48 @@ export function SetParameterValuesResponse(xml: Element): CpeSetResponse {
         name: "SetParameterValuesResponse",
         status: parseInt(xml.children.find(n => n.localName === "Status").text)
     };
+}
+export function InformResponse(): string {
+    return "<cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse>";
+}
+
+export function GetRPCMethodsResponse(methodResponse): string {
+    return `<cwmp:GetRPCMethodsResponse><MethodList soap-enc:arrayType="xsd:string[${
+        methodResponse.methodList.length
+        }]">${methodResponse.methodList
+            .map(m => `<string>${m}</string>`)
+            .join("")}</MethodList></cwmp:GetRPCMethodsResponse>`;
+}
+
+export function GetParameterNames(methodRequest): string {
+    return `<cwmp:GetParameterNames><ParameterPath>${
+        methodRequest.parameterPath
+        }</ParameterPath><NextLevel>${+methodRequest.nextLevel}</NextLevel></cwmp:GetParameterNames>`;
+}
+
+export function GetParameterValues(methodRequest): string {
+    return `<cwmp:GetParameterValues><ParameterNames soap-enc:arrayType="xsd:string[${
+        methodRequest.parameterNames.length
+        }]">${methodRequest.parameterNames
+            .map(p => `<string>${p}</string>`)
+            .join("")}</ParameterNames></cwmp:GetParameterValues>`;
+}
+
+export function SetParameterValues(methodRequest): string {
+    const params = methodRequest.parameterList.map(p => {
+        let val = p[1];
+        if (p[2] === "xsd:dateTime" && typeof val === "number") {
+            val = new Date(val).toISOString().replace(".000", "");
+        }
+        if (p[2] === "xsd:boolean" && typeof val === "boolean")
+            val = +val;
+        return `<ParameterValueStruct><Name>${p[0]}</Name><Value xsi:type="${p[2]}">${parseFuncs.encodeEntities("" + val)}</Value></ParameterValueStruct>`;
+    });
+
+    return `<cwmp:SetParameterValues><ParameterList soap-enc:arrayType="cwmp:ParameterValueStruct[${
+        methodRequest.parameterList.length
+        }]">${params.join(
+            ""
+        )}</ParameterList><ParameterKey>${methodRequest.parameterKey ||
+        ""}</ParameterKey></cwmp:SetParameterValues>`;
 }
