@@ -3,7 +3,7 @@ import * as cluster from "./cluster";
 import * as zlib from "zlib";
 import * as endfuncs from "./endfuncs"
 import * as parsefuncs from "./parsefuncs"
-import {Element, SoapMessage, InformRequest, CpeFault, FaultStruct, SpvFault, AcsResponse, CpeGetResponse, CpeSetResponse} from "./interfaces"
+import { Element, SoapMessage, InformRequest, CpeFault, FaultStruct, SpvFault, AcsResponse, CpeGetResponse, CpeSetResponse } from "./interfaces"
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
@@ -95,6 +95,7 @@ function Sstart(
   server.listen(port, networkInterface);
 }
 
+let n = 0;
 async function CWlistner(httpRequest, httpResponse) {
 
   //#region Check that HTTP method is POST
@@ -108,12 +109,25 @@ async function CWlistner(httpRequest, httpResponse) {
   }
   //#endregion
 
-  //If request is empty (no more RPCs from CPE)
-  if(httpRequest.headers["content-length"] == "0"){
+
+  if (n == 2) {
     httpResponse.writeHead(200, {});
     httpResponse.end()
+    n = 0;
     return;
   }
+
+
+  //If request is empty (no more RPCs from CPE)
+  if (httpRequest.headers["content-length"] == "0") {
+    httpResponse.setHeader('Content-Type', 'text/xml');
+    httpResponse.write('<?xml version="1.0" encoding="UTF-8"?><soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">s61b602f</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:GetParameterNames><ParameterPath/><NextLevel>false</NextLevel></cwmp:GetParameterNames></soap-env:Body></soap-env:Envelope>'); //write a response to the client
+    httpResponse.end(); //end the response
+    n = 2;
+
+  }
+
+
 
   //#region Decode request if encoded
   let stream = httpRequest;
@@ -182,9 +196,9 @@ async function CWlistner(httpRequest, httpResponse) {
     parseWarnings
   );
 
-  httpResponse.setHeader('Content-Type', 'text/xml');
-  httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">w0e9ylwq</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
-  httpResponse.end(); //end the response
+  //httpResponse.setHeader('Content-Type', 'text/xml');
+  //httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">w0e9ylwq</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
+  //httpResponse.end(); //end the response
 }
 
 /**
