@@ -1,3 +1,5 @@
+import { IncomingMessage, ServerResponse } from "http";
+
 export interface Attribute {
     name: string;
     namespace: string;
@@ -91,7 +93,25 @@ export interface CpeSetResponse extends CpeResponse {
     completeTime?: number;
 }
 
-export interface SessionContext{
+export interface SessionContext {
     cpeRequests: string[];
-    acsRequests?: string[];
+    acsRequests?: GetAcsRequest[];
+    httpRequest?: IncomingMessage;
+    httpResponse?: ServerResponse;
+    cwmpVersion: string;
 }
+
+export interface AcsRequest {
+    name: string;
+    next?: string;
+}
+
+export interface GetAcsRequest extends AcsRequest {
+    name: "GetParameterNames" | "GetParameterValues" | "SetParameterValues";
+    parameterNames?: string[];
+    parameterPath?: string;
+    nextLevel?: boolean;
+    parameterList?: [string, string | number | boolean, string][];
+}
+
+
