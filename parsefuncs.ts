@@ -360,3 +360,14 @@ export function decodeEntities(string): string {
 export function decodeString(buffer: Buffer, charset: string): string {
     return buffer.toString(charset);
 }
+
+export function encodeEntities(string): string {
+    const entities = {
+      "&": "&amp;",
+      '"': "&quot;",
+      "'": "&apos;",
+      "<": "&lt;",
+      ">": "&gt;"
+    };
+    return string.replace(/[&"'<>]/g, m => entities[m]);
+  }

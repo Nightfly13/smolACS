@@ -231,3 +231,183 @@ function getContext(socket: Socket): SessionContext {
   currentSessions.set(socket, sessionContext);
   return sessionContext
 }
+
+const SERVER_NAME = `smolACS/${VERSION}`;
+
+const NAMESPACES = {
+  "1.0": {
+    "soap-enc": "http://schemas.xmlsoap.org/soap/encoding/",
+    "soap-env": "http://schemas.xmlsoap.org/soap/envelope/",
+    xsd: "http://www.w3.org/2001/XMLSchema",
+    xsi: "http://www.w3.org/2001/XMLSchema-instance",
+    cwmp: "urn:dslforum-org:cwmp-1-0"
+  },
+  "1.1": {
+    "soap-enc": "http://schemas.xmlsoap.org/soap/encoding/",
+    "soap-env": "http://schemas.xmlsoap.org/soap/envelope/",
+    xsd: "http://www.w3.org/2001/XMLSchema",
+    xsi: "http://www.w3.org/2001/XMLSchema-instance",
+    cwmp: "urn:dslforum-org:cwmp-1-1"
+  },
+  "1.2": {
+    "soap-enc": "http://schemas.xmlsoap.org/soap/encoding/",
+    "soap-env": "http://schemas.xmlsoap.org/soap/envelope/",
+    xsd: "http://www.w3.org/2001/XMLSchema",
+    xsi: "http://www.w3.org/2001/XMLSchema-instance",
+    cwmp: "urn:dslforum-org:cwmp-1-2"
+  },
+  "1.3": {
+    "soap-enc": "http://schemas.xmlsoap.org/soap/encoding/",
+    "soap-env": "http://schemas.xmlsoap.org/soap/envelope/",
+    xsd: "http://www.w3.org/2001/XMLSchema",
+    xsi: "http://www.w3.org/2001/XMLSchema-instance",
+    cwmp: "urn:dslforum-org:cwmp-1-2"
+  },
+  "1.4": {
+    "soap-enc": "http://schemas.xmlsoap.org/soap/encoding/",
+    "soap-env": "http://schemas.xmlsoap.org/soap/envelope/",
+    xsd: "http://www.w3.org/2001/XMLSchema",
+    xsi: "http://www.w3.org/2001/XMLSchema-instance",
+    cwmp: "urn:dslforum-org:cwmp-1-3"
+  }
+};
+
+const namespacesAttrs = {
+  "1.0": Object.entries(NAMESPACES["1.0"])
+    .map(([k, v]) => `xmlns:${k}="${v}"`)
+    .join(" "),
+  "1.1": Object.entries(NAMESPACES["1.1"])
+    .map(([k, v]) => `xmlns:${k}="${v}"`)
+    .join(" "),
+  "1.2": Object.entries(NAMESPACES["1.2"])
+    .map(([k, v]) => `xmlns:${k}="${v}"`)
+    .join(" "),
+  "1.3": Object.entries(NAMESPACES["1.3"])
+    .map(([k, v]) => `xmlns:${k}="${v}"`)
+    .join(" "),
+  "1.4": Object.entries(NAMESPACES["1.4"])
+    .map(([k, v]) => `xmlns:${k}="${v}"`)
+    .join(" ")
+};
+
+/**
+ * returns ACS response as an array of format [code, headers, XML data]
+ * @param rpc 
+ */
+export function response(rpc): { code: number; headers: {}; data: string } {
+  const headers = {
+    Server: SERVER_NAME,
+    SOAPServer: SERVER_NAME
+  };
+
+  if (!rpc) return { code: 204, headers: headers, data: "" }; //if rpc doesn't exist, return error code 204
+
+  let body;
+  if (rpc.acsResponse) { //assign function based on acsResponse
+    switch (rpc.acsResponse.name) {
+      case "InformResponse":
+        body = InformResponse();
+        break;
+      case "GetRPCMethodsResponse":
+        body = GetRPCMethodsResponse(rpc.acsResponse);
+        break;
+      /*case "TransferCompleteResponse":
+        body = TransferCompleteResponse();
+        break;
+      case "RequestDownloadResponse":
+        body = RequestDownloadResponse();
+        break;*/
+      default:
+        throw new Error(`Unknown method response type ${rpc.acsResponse.name}`);
+    }
+  } else if (rpc.acsRequest) { //assign function based on acsRequest
+    switch (rpc.acsRequest.name) {
+      case "GetParameterNames":
+        body = GetParameterNames(rpc.acsRequest);
+        break;
+      case "GetParameterValues":
+        body = GetParameterValues(rpc.acsRequest);
+        break;
+      case "SetParameterValues":
+        body = SetParameterValues(rpc.acsRequest);
+        break;
+      /*case "AddObject":
+        body = AddObject(rpc.acsRequest);
+        break;
+      case "DeleteObject":
+        body = DeleteObject(rpc.acsRequest);
+        break;
+      case "Reboot":
+        body = Reboot(rpc.acsRequest);
+        break;
+      case "FactoryReset":
+        body = FactoryReset();
+        break;
+      case "Download":
+        body = Download(rpc.acsRequest);
+        break;*/
+      default:
+        throw new Error(`Unknown method request ${rpc.acsRequest.name}`);
+    }
+  }
+
+  headers["Content-Type"] = 'text/xml; charset="utf-8"';
+  return {
+    code: 200,
+    headers: headers,
+    data: `<?xml version="1.0" encoding="UTF-8"?>\n<soap-env:Envelope ${
+      namespacesAttrs[rpc.cwmpVersion]
+    }><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">${
+      rpc.id
+    }</cwmp:ID></soap-env:Header><soap-env:Body>${body}</soap-env:Body></soap-env:Envelope>`
+  };
+}
+
+function InformResponse(): string {
+  return "<cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse>";
+}
+
+function GetRPCMethodsResponse(methodResponse): string {
+  return `<cwmp:GetRPCMethodsResponse><MethodList soap-enc:arrayType="xsd:string[${
+    methodResponse.methodList.length
+  }]">${methodResponse.methodList
+    .map(m => `<string>${m}</string>`)
+    .join("")}</MethodList></cwmp:GetRPCMethodsResponse>`;
+}
+
+function GetParameterNames(methodRequest): string {
+  return `<cwmp:GetParameterNames><ParameterPath>${
+    methodRequest.parameterPath
+  }</ParameterPath><NextLevel>${+methodRequest.nextLevel}</NextLevel></cwmp:GetParameterNames>`;
+}
+
+function GetParameterValues(methodRequest): string {
+  return `<cwmp:GetParameterValues><ParameterNames soap-enc:arrayType="xsd:string[${
+    methodRequest.parameterNames.length
+  }]">${methodRequest.parameterNames
+    .map(p => `<string>${p}</string>`)
+    .join("")}</ParameterNames></cwmp:GetParameterValues>`;
+}
+
+function SetParameterValues(methodRequest): string {
+  const params = methodRequest.parameterList.map(p => {
+    let val = p[1];
+    if (p[2] === "xsd:dateTime" && typeof val === "number") {
+      val = new Date(val).toISOString();
+      if (methodRequest.DATETIME_MILLISECONDS === false)
+        val = val.replace(".000", "");
+    }
+    if (p[2] === "xsd:boolean" && typeof val === "boolean")
+      if (methodRequest.BOOLEAN_LITERAL === false) val = +val;
+    return `<ParameterValueStruct><Name>${p[0]}</Name><Value xsi:type="${
+      p[2]
+    }">${parseFuncs.encodeEntities("" + val)}</Value></ParameterValueStruct>`;
+  });
+
+  return `<cwmp:SetParameterValues><ParameterList soap-enc:arrayType="cwmp:ParameterValueStruct[${
+    methodRequest.parameterList.length
+  }]">${params.join(
+    ""
+  )}</ParameterList><ParameterKey>${methodRequest.parameterKey ||
+    ""}</ParameterKey></cwmp:SetParameterValues>`;
+}
