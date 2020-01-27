@@ -4,12 +4,17 @@ import * as zlib from "zlib";
 import * as endFuncs from "./endFuncs"
 import * as parseFuncs from "./parseFuncs"
 import * as soap from "./soap"
+import { Readable } from "stream";
+import { Socket } from "net";
+import { SessionContext } from "./interfaces";
+
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
 const SERVICE_PORT = "7547"; // get port from config
 
 let server: http.Server;
 let listener: (...args) => void;
+const currentSessions = new WeakMap<Socket, SessionContext>();
 
 //#region 
 if (!cluster.worker) { //If the current worker is master
@@ -94,7 +99,7 @@ function Sstart(
 }
 
 let n = 0;
-async function CWlistner(httpRequest, httpResponse) {
+async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse) {
 
   //#region Check that HTTP method is POST
   if (httpRequest.method !== "POST") {//if request method isn't "POST", send/respond with 405 Method Not Allowed
@@ -107,28 +112,11 @@ async function CWlistner(httpRequest, httpResponse) {
   }
   //#endregion
 
-
-  if (n == 2) {
-    httpResponse.writeHead(200, {});
-    httpResponse.end()
-    n = 0;
-    return;
-  }
-
-
-  //If request is empty (no more RPCs from CPE)
-  if (httpRequest.headers["content-length"] == "0") {
-    httpResponse.setHeader('Content-Type', 'text/xml');
-    httpResponse.write('<?xml version="1.0" encoding="UTF-8"?><soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">s61b602f</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:GetParameterNames><ParameterPath/><NextLevel>false</NextLevel></cwmp:GetParameterNames></soap-env:Body></soap-env:Envelope>'); //write a response to the client
-    httpResponse.end(); //end the response
-    n = 2;
-
-  }
-
+ 
 
 
   //#region Decode request if encoded
-  let stream = httpRequest;
+  let stream: Readable = httpRequest;
   if (httpRequest.headers["content-encoding"]) {//if request has content eencoding, then try to decode it
     switch (httpRequest.headers["content-encoding"]) {
       case "gzip":
@@ -169,6 +157,8 @@ async function CWlistner(httpRequest, httpResponse) {
   });
   //#endregion
 
+  let sessionContext = getContext(httpRequest.connection);
+
   //#region Find charset
   let charset;
   if (httpRequest.headers["content-type"]) {//If the request has a content type header field
@@ -184,17 +174,60 @@ async function CWlistner(httpRequest, httpResponse) {
   }
   //#endregion
 
-  const bodyStr = parseFuncs.decodeString(body, charset);//decode body
+  const bodyStr = parseFuncs.decodeString(body, charset); //decode body
 
   const parseWarnings = [];
   let rpc;
   rpc = soap.request( //get RPC object from bodyStr
     bodyStr,
     null,
-    parseWarnings
+    parseWarnings,
+    sessionContext
   );
 
-  //httpResponse.setHeader('Content-Type', 'text/xml');
-  //httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">w0e9ylwq</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
-  //httpResponse.end(); //end the response
+  switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
+    case "end":
+      if (sessionContext.acsRequests.length == 0) {
+        httpResponse.writeHead(200, {});
+        httpResponse.end()
+        currentSessions.delete(httpRequest.connection)
+        return;
+      }
+
+      for (let request of sessionContext.acsRequests) {
+        if (request == "GetParameterNames") {
+          httpResponse.setHeader('Content-Type', 'text/xml');
+          httpResponse.write('<?xml version="1.0" encoding="UTF-8"?><soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">s61b602f</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:GetParameterNames><ParameterPath>InternetGatewayDevice.UserInterface.X_HUAWEI_Web.</ParameterPath><NextLevel>false</NextLevel></cwmp:GetParameterNames></soap-env:Body></soap-env:Envelope>'); //write a response to the client
+          httpResponse.end(); //end the response
+        }
+        sessionContext.acsRequests.pop()
+      }
+      break
+    case "Inform":
+      httpResponse.setHeader('Content-Type', 'text/xml');
+      httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">' + rpc.id + '</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
+      httpResponse.end(); //end the response
+      return
+    default:
+      httpResponse.writeHead(200, {});
+      httpResponse.end()
+      currentSessions.delete(httpRequest.connection)
+      return;
+  }
+  return;
+}
+
+function createContext(): SessionContext {
+  return {
+    cpeRequests: [],
+    acsRequests: ["GetParameterNames"]
+  }
+}
+
+function getContext(socket: Socket): SessionContext {
+  if (currentSessions.has(socket)) return currentSessions.get(socket)
+
+  let sessionContext = createContext()
+  currentSessions.set(socket, sessionContext);
+  return sessionContext
 }

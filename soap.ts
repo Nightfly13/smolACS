@@ -1,5 +1,5 @@
 import * as parsefuncs from "./parseFuncs"
-import {Element, FaultStruct, SpvFault, SoapMessage} from "./interfaces"
+import {Element, FaultStruct, SpvFault, SoapMessage, SessionContext} from "./interfaces"
 import * as methods from "./methods"
 let warnings;
 
@@ -9,7 +9,7 @@ let warnings;
  * @param cwmpVersion 
  * @param warn array for warnings
  */
-export function request(body: string, cwmpVersion, warn): SoapMessage {
+export function request(body: string, cwmpVersion, warn, sessionContext: SessionContext): SoapMessage {
     warnings = warn;
 
     const rpc = {
@@ -21,8 +21,11 @@ export function request(body: string, cwmpVersion, warn): SoapMessage {
         cpeResponse: null
     };
 
-    if (!body.length) return rpc; //if body is empty return 
 
+    if (!body.length) {
+        sessionContext.cpeRequests.push("end");
+        return rpc; //if body is empty return 
+    }
     const xml = parsefuncs.parseXml(body); //get the traversable representation of XML body
 
     if (!xml.children.length) return rpc;//if there was no xml - return 
@@ -100,6 +103,9 @@ export function request(body: string, cwmpVersion, warn): SoapMessage {
         message: "request method is " + methodElement.localName,
         pid: process.pid,
     });
+
+    sessionContext.cpeRequests.push(methodElement.localName)
+
     switch (methodElement.localName) {
         case "Inform":
             rpc.cpeRequest = methods.Inform(methodElement);
