@@ -90,3 +90,8 @@ export interface CpeSetResponse extends CpeResponse {
     startTime?: number;
     completeTime?: number;
 }
+
+export interface SessionContext{
+    cpeRequests: string[];
+    acsRequests?: string[];
+}
