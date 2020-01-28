@@ -13,7 +13,7 @@ it's so smol so very smol
 - [x] Add support for Reboot CPE method
 - [x] Add support for DeleteObject CPE method
 - [ ] Add support for Download CPE method
-- [ ] Add support for TransferComplete ACS method
+- [x] Add support for TransferComplete ACS method
 - [ ] Add support for AutonomousTransferComplete ACS method
 - [x] Add support for GetRPCMethods ACS method
 - [x] Add support for ACS and CPE Inform method

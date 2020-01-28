@@ -1,4 +1,4 @@
-import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse } from "./interfaces"
+import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest } from "./interfaces"
 import * as soap from "./soap"
 import * as parseFuncs from "./parseFuncs"
 
@@ -123,6 +123,11 @@ export function DownloadResponse(xml: Element): CpeSetResponse {
   };
 }
 
+export function TransferCompleteResponse(): string {
+  return "<cwmp:TransferCompleteResponse></cwmp:TransferCompleteResponse>";
+}
+
+
 /**
  * returns object with name, parameter list, device ID, event and retry counter
  * @param xml inform xml object
@@ -241,4 +246,31 @@ export function Download(methodRequest): string {
     )}</SuccessURL><FailureURL>${parseFuncs.encodeEntities(
       methodRequest.failureUrl || ""
     )}</FailureURL></cwmp:Download>`;
+}
+export function TransferComplete(xml: Element): TransferCompleteRequest {
+  let commandKey, _faultStruct, startTime, completeTime;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "CommandKey":
+        commandKey = c.text;
+        break;
+      case "FaultStruct":
+        _faultStruct = soap.faultStruct(c);
+        break;
+      case "StartTime":
+        startTime = Date.parse(c.text);
+        break;
+      case "CompleteTime":
+        completeTime = Date.parse(c.text);
+        break;
+    }
+  }
+
+  return {
+    name: "TransferComplete",
+    commandKey: commandKey,
+    faultStruct: _faultStruct,
+    startTime: startTime,
+    completeTime: completeTime
+  };
 }

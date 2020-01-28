@@ -79,6 +79,14 @@ export interface AcsResponse {
     faultStruct?: FaultStruct;
 }
 
+export interface TransferCompleteRequest extends CpeRequest {
+    name: "TransferComplete";
+    commandKey?: string;
+    faultStruct?: FaultStruct;
+    startTime?: number;
+    completeTime?: number;
+  }
+  
 export interface CpeSetResponse extends CpeResponse {
     name:
     | "SetParameterValuesResponse"
@@ -135,7 +143,7 @@ export interface GetAcsRequest extends AcsRequest {
     targetFileName?: string;
     delaySeconds?: number;
     successURL?: string;
-    failureURL?: string; 
+    failureURL?: string;
 }
 
 
