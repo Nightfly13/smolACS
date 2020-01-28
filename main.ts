@@ -190,6 +190,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   );
 
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
+  if (!rpc.cwmpVersion) rpc.cwmpVersion = sessionContext.cwmpVersion
 
     let res
 
