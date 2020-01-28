@@ -99,6 +99,30 @@ export function FactoryResetResponse(): CpeSetResponse {
   };
 }
 
+export function DownloadResponse(xml: Element): CpeSetResponse {
+  let status, startTime, completeTime;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "Status":
+        status = parseInt(c.text);
+        break;
+      case "StartTime":
+        startTime = Date.parse(c.text);
+        break;
+      case "CompleteTime":
+        completeTime = Date.parse(c.text);
+        break;
+    }
+  }
+
+  return {
+    name: "DownloadResponse",
+    status: status,
+    startTime: startTime,
+    completeTime: completeTime
+  };
+}
+
 /**
  * returns object with name, parameter list, device ID, event and retry counter
  * @param xml inform xml object
@@ -198,4 +222,23 @@ export function DeleteObject(methodRequest): string {
     methodRequest.objectName
     }</ObjectName><ParameterKey>${methodRequest.parameterKey ||
     ""}</ParameterKey></cwmp:DeleteObject>`;
+}
+
+export function Download(methodRequest): string {
+  return `<cwmp:Download><CommandKey>${methodRequest.commandKey ||
+    ""}</CommandKey><FileType>${methodRequest.fileType}</FileType><URL>${
+    methodRequest.url
+    }</URL><Username>${parseFuncs.encodeEntities(
+      methodRequest.username || ""
+    )}</Username><Password>${parseFuncs.encodeEntities(
+      methodRequest.password || ""
+    )}</Password><FileSize>${methodRequest.fileSize ||
+    "0"}</FileSize><TargetFileName>${parseFuncs.encodeEntities(
+      methodRequest.targetFileName || ""
+    )}</TargetFileName><DelaySeconds>${methodRequest.delaySeconds ||
+    "0"}</DelaySeconds><SuccessURL>${parseFuncs.encodeEntities(
+      methodRequest.successUrl || ""
+    )}</SuccessURL><FailureURL>${parseFuncs.encodeEntities(
+      methodRequest.failureUrl || ""
+    )}</FailureURL></cwmp:Download>`;
 }

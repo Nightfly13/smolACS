@@ -268,6 +268,19 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               cwmpVersion: rpc.cwmpVersion
             })
             return soap.writeResponse(sessionContext, res)
+          case "Download":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.Download({
+                fileType: request.fileType,
+                URL: request.URL,
+                username: request.username,
+                password: request.password,
+                delaySeconds: request.delaySeconds
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           default:
             throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
         }
@@ -303,29 +316,10 @@ function createContext(): SessionContext {
     cpeRequests: [],
     acsRequests: [
       {
-        name: "GetParameterNames", 
-        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
-        nextLevel: false
-      },
-      {
-        name: "AddObject", 
-        objectName: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.UserInfo.", 
-        nextLevel: false
-      },
-      {
-        name: "GetParameterNames", 
-        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
-        nextLevel: false
-      },
-      {
-        name: "DeleteObject", 
-        objectName: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.UserInfo.2", 
-        nextLevel: false
-      },
-      {
-        name: "GetParameterNames", 
-        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
-        nextLevel: false
+        name: "Download", 
+        fileType: "2 Web Content",
+        URL: "https://ichef.bbci.co.uk/news/660/cpsprodpb/16620/production/_91408619_55df76d5-2245-41c1-8031-07a4da3f313f.jpg",
+        delaySeconds: 0
       }
     ],
     cwmpVersion: "0"

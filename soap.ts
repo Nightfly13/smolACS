@@ -143,10 +143,10 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
         break;
       case "FactoryResetResponse":
         rpc.cpeResponse = methods.FactoryResetResponse();
-        break;/*
+        break;
       case "DownloadResponse":
-        rpc.cpeResponse = DownloadResponse(methodElement);
-        break;*/
+        rpc.cpeResponse = methods.DownloadResponse(methodElement);
+        break;
         case "Fault":
             rpc.cpeFault = methods.fault(methodElement);
             break;

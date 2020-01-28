@@ -107,12 +107,35 @@ export interface AcsRequest {
 }
 
 export interface GetAcsRequest extends AcsRequest {
-    name: "GetParameterNames" | "GetParameterValues" | "SetParameterValues" | "AddObject" | "DeleteObject"| "Reboot" | "FactoryReset";
+    name: 
+    | "GetParameterNames" 
+    | "GetParameterValues" 
+    | "SetParameterValues" 
+    | "AddObject" 
+    | "DeleteObject"
+    | "Reboot" 
+    | "FactoryReset" 
+    | "Download";
     parameterNames?: string[];
     parameterPath?: string;
     nextLevel?: boolean;
     parameterList?: [string, string | number | boolean, string][];
     objectName?: string;
+    fileType?: 
+    | "1 Firmware Upgrade Image"
+    | "2 Web Content"
+    | "3 Vendor Configuration File"
+    | "4 Tone File"
+    | "5 Ringer File"
+    | "6 Stored Firmware Image"
+    URL?: string;
+    username?: string;
+    password?: string;
+    fileSize?: number;
+    targetFileName?: string;
+    delaySeconds?: number;
+    successURL?: string;
+    failureURL?: string; 
 }
 
 
