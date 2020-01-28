@@ -274,7 +274,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               id: rpc.id,
               body: methods.Download({
                 fileType: request.fileType,
-                URL: request.URL,
+                url: request.URL,
                 username: request.username,
                 password: request.password,
                 delaySeconds: request.delaySeconds
