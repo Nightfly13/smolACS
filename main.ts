@@ -204,6 +204,8 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         return;
       }
 
+      if(!rpc.id) rpc.id = Math.random().toString(36).slice(-8);
+
       let request = sessionContext.acsRequests.shift()
         switch(request.name){
           case "GetParameterNames":
@@ -243,15 +245,15 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               cwmpVersion: rpc.cwmpVersion
             })
             return soap.writeResponse(sessionContext, res)
-            case "DeleteObject":
-              res = soap.response({
-                id: rpc.id,
-                body: methods.DeleteObject({
-                  objectName: request.objectName
-                }),
-                cwmpVersion: rpc.cwmpVersion
-              })
-              return soap.writeResponse(sessionContext, res)
+          case "DeleteObject":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.DeleteObject({
+                objectName: request.objectName
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           default:
             throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
         }
