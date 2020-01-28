@@ -4,6 +4,7 @@ import * as zlib from "zlib";
 import * as endFuncs from "./endFuncs"
 import * as parseFuncs from "./parseFuncs"
 import * as soap from "./soap"
+import * as methods from "./methods"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext} from "./interfaces";
@@ -190,8 +191,11 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
 
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
 
+    let res
+
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
     case "end":
+      console.log(sessionContext.acsRequests.length)
       if (sessionContext.acsRequests.length == 0) {
         console.log("STOP")
         httpResponse.writeHead(200, {});
@@ -200,31 +204,48 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         return;
       }
 
-      const requestId = Math.random().toString(36).slice(-8);
-
-
-      for (let request of sessionContext.acsRequests) {
+      let request = sessionContext.acsRequests.shift()
         switch(request.name){
           case "GetParameterNames":
-            httpResponse.setHeader('Content-Type', 'text/xml');
-            httpResponse.write('<?xml version="1.0" encoding="UTF-8"?><soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">' + requestId + '</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:GetParameterNames><ParameterPath>'+ request.parameterPath + '</ParameterPath><NextLevel>' + (request.nextLevel ? "1" : "0") + '</NextLevel></cwmp:GetParameterNames></soap-env:Body></soap-env:Envelope>'); //write a response to the client
-            httpResponse.end(); //end the response
-            return
+            res = soap.response({
+              id: rpc.id,
+              body: methods.GetParameterNames({
+                parameterPath: request.parameterPath,
+                nextLevel: request.nextLevel
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           case "GetParameterValues":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.GetParameterValues({
+                parameterNames: request.parameterNames
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           case "SetParameterValues":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.SetParameterValues({
+                parameterList: request.parameterList
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           default:
-            break
+            throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
         }
-        sessionContext.acsRequests.shift()
-      }
-      break
     case "Inform":
-      httpResponse.setHeader('Content-Type', 'text/xml');
-      httpResponse.write('<soap-env:Envelope xmlns:soap-enc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap-env="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cwmp="urn:dslforum-org:cwmp-1-0"><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">' + rpc.id + '</cwmp:ID></soap-env:Header><soap-env:Body><cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse></soap-env:Body></soap-env:Envelope>'); //write a response to the client
-      httpResponse.end(); //end the response
-      return
+      res = soap.response({
+        id: rpc.id,
+        body: methods.InformResponse(),
+        cwmpVersion: rpc.cwmpVersion
+      });
+      return soap.writeResponse(sessionContext, res);
     case "GetRPCMethods":
-      const res = soap.response({
+      res = soap.response({
         id: rpc.id,
         acsResponse: {
           name: "GetRPCMethodsResponse",
@@ -235,19 +256,34 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       return soap.writeResponse(sessionContext, res);
     case "TransferComplete":
     default:
-      console.log("STOP")
+      console.log("STOP fail with: " + sessionContext.cpeRequests)
       httpResponse.writeHead(200, {});
       httpResponse.end()
       currentSessions.delete(httpRequest.connection)
       return;
   }
-  return;
 }
 
 function createContext(): SessionContext {
   return {
     cpeRequests: [],
-    acsRequests: [{name: "GetParameterNames", parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Web."}],
+    acsRequests: [
+      {
+        name: "GetParameterNames", 
+        parameterPath: "InternetGatewayDevice.DeviceInfo.", 
+        nextLevel: false
+      },
+      {
+        name: "SetParameterValues", 
+        parameterList: [
+          ["InternetGatewayDevice.DeviceInfo.ProvisioningCode", "42069691337", "xsd:string"],
+          ["InternetGatewayDevice.ManagementServer.Username", "lmaoXD", "xsd:string"]]
+      }, 
+      {
+        name: "GetParameterValues", 
+        parameterNames: ["InternetGatewayDevice.DeviceInfo.ProvisioningCode", "InternetGatewayDevice.ManagementServer.Username"]
+      }
+    ],
     cwmpVersion: "0"
   }
 }
