@@ -137,13 +137,13 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
         break;
       case "DeleteObjectResponse":
         rpc.cpeResponse = methods.DeleteObjectResponse(methodElement);
-        break;/*
+        break;
       case "RebootResponse":
-        rpc.cpeResponse = RebootResponse();
+        rpc.cpeResponse = methods.RebootResponse();
         break;
       case "FactoryResetResponse":
-        rpc.cpeResponse = FactoryResetResponse();
-        break;
+        rpc.cpeResponse = methods.FactoryResetResponse();
+        break;/*
       case "DownloadResponse":
         rpc.cpeResponse = DownloadResponse(methodElement);
         break;*/

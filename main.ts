@@ -254,6 +254,20 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               cwmpVersion: rpc.cwmpVersion
             })
             return soap.writeResponse(sessionContext, res)
+          case "Reboot":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.Reboot({}),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
+          case "FactoryReset":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.FactoryReset(),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           default:
             throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
         }

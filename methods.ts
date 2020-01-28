@@ -87,6 +87,18 @@ export function DeleteObjectResponse(xml: Element): CpeSetResponse {
   };
 }
 
+export function RebootResponse(): CpeSetResponse {
+  return {
+    name: "RebootResponse"
+  };
+}
+
+export function FactoryResetResponse(): CpeSetResponse {
+  return {
+    name: "FactoryResetResponse"
+  };
+}
+
 /**
  * returns object with name, parameter list, device ID, event and retry counter
  * @param xml inform xml object
@@ -131,6 +143,13 @@ export function Inform(xml: Element): InformRequest {
 
 export function GetRPCMethods(): AcsResponse {
   return { name: "GetRPCMethods" };
+}
+export function Reboot(methodRequest): string {
+  return `<cwmp:Reboot><CommandKey>${methodRequest.commandKey ||
+    ""}</CommandKey></cwmp:Reboot>`;
+}
+export function FactoryReset(): string {
+  return "<cwmp:FactoryReset></cwmp:FactoryReset>";
 }
 
 //Generate ACS RPC requests

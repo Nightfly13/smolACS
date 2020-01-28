@@ -107,7 +107,7 @@ export interface AcsRequest {
 }
 
 export interface GetAcsRequest extends AcsRequest {
-    name: "GetParameterNames" | "GetParameterValues" | "SetParameterValues" | "AddObject" | "DeleteObject";
+    name: "GetParameterNames" | "GetParameterValues" | "SetParameterValues" | "AddObject" | "DeleteObject"| "Reboot" | "FactoryReset";
     parameterNames?: string[];
     parameterPath?: string;
     nextLevel?: boolean;
