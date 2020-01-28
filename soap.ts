@@ -108,7 +108,7 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
         pid: process.pid,
     });
 
-    sessionContext.cpeRequests.push(methodElement.localName)
+    if(!methodElement.localName.includes("Response")) sessionContext.cpeRequests.push(methodElement.localName)
 
     switch (methodElement.localName) {
         case "Inform":
@@ -355,8 +355,9 @@ export function response(rpc): { code: number; headers: {}; data: string } {
   };
 
   if (!rpc) return { code: 204, headers: headers, data: "" }; //if rpc doesn't exist, return error code 204
-
-  let body;
+  
+  //#region
+  /*let body;
   if (rpc.acsResponse) { //assign function based on acsResponse
     switch (rpc.acsResponse.name) {
       case "InformResponse":
@@ -370,7 +371,7 @@ export function response(rpc): { code: number; headers: {}; data: string } {
         break;
       case "RequestDownloadResponse":
         body = RequestDownloadResponse();
-        break;*/
+        break;
       default:
         throw new Error(`Unknown method response type ${rpc.acsResponse.name}`);
     }
@@ -399,11 +400,12 @@ export function response(rpc): { code: number; headers: {}; data: string } {
         break;
       case "Download":
         body = Download(rpc.acsRequest);
-        break;*/
+        break;
       default:
         throw new Error(`Unknown method request ${rpc.acsRequest.name}`);
     }
-  }
+  }*/
+  //#endregion
 
   headers["Content-Type"] = 'text/xml; charset="utf-8"';
   return {
@@ -413,7 +415,7 @@ export function response(rpc): { code: number; headers: {}; data: string } {
       namespacesAttrs[rpc.cwmpVersion]
       }><soap-env:Header><cwmp:ID soap-env:mustUnderstand="1">${
       rpc.id
-      }</cwmp:ID></soap-env:Header><soap-env:Body>${body}</soap-env:Body></soap-env:Envelope>`
+      }</cwmp:ID></soap-env:Header><soap-env:Body>${rpc.body}</soap-env:Body></soap-env:Envelope>`
   };
 }
 
