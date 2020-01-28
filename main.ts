@@ -234,6 +234,24 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               cwmpVersion: rpc.cwmpVersion
             })
             return soap.writeResponse(sessionContext, res)
+          case "AddObject":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.AddObject({
+                objectName: request.objectName
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
+            case "DeleteObject":
+              res = soap.response({
+                id: rpc.id,
+                body: methods.DeleteObject({
+                  objectName: request.objectName
+                }),
+                cwmpVersion: rpc.cwmpVersion
+              })
+              return soap.writeResponse(sessionContext, res)
           default:
             throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
         }
@@ -270,18 +288,28 @@ function createContext(): SessionContext {
     acsRequests: [
       {
         name: "GetParameterNames", 
-        parameterPath: "InternetGatewayDevice.DeviceInfo.", 
+        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
         nextLevel: false
       },
       {
-        name: "SetParameterValues", 
-        parameterList: [
-          ["InternetGatewayDevice.DeviceInfo.ProvisioningCode", "42069691337", "xsd:string"],
-          ["InternetGatewayDevice.ManagementServer.Username", "lmaoXD", "xsd:string"]]
-      }, 
+        name: "AddObject", 
+        objectName: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.UserInfo.", 
+        nextLevel: false
+      },
       {
-        name: "GetParameterValues", 
-        parameterNames: ["InternetGatewayDevice.DeviceInfo.ProvisioningCode", "InternetGatewayDevice.ManagementServer.Username"]
+        name: "GetParameterNames", 
+        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
+        nextLevel: false
+      },
+      {
+        name: "DeleteObject", 
+        objectName: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.UserInfo.2", 
+        nextLevel: false
+      },
+      {
+        name: "GetParameterNames", 
+        parameterPath: "InternetGatewayDevice.UserInterface.X_HUAWEI_Cli.", 
+        nextLevel: false
       }
     ],
     cwmpVersion: "0"

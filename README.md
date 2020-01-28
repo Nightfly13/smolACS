@@ -8,8 +8,8 @@ it's so smol so very smol
 - [x] Add support for SetParameterValues CPE method
 - [ ] Add support for SetParameterAttributes CPE method
 - [ ] Add support for GetParameterAttributes CPE method
-- [ ] Add support for AddObject CPE method
-- [ ] Add support for DeleteObject CPE method
+- [x] Add support for AddObject CPE method
+- [x] Add support for DeleteObject CPE method
 - [ ] Add support for Download CPE method
 - [ ] Add support for Reboot CPE method
 - [ ] Add support for TransferComplete ACS method

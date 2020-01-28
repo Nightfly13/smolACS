@@ -131,13 +131,13 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
             break;
         case "SetParameterValuesResponse":
             rpc.cpeResponse = methods.SetParameterValuesResponse(methodElement);
-            break;/*
+            break;
       case "AddObjectResponse":
-        rpc.cpeResponse = AddObjectResponse(methodElement);
+        rpc.cpeResponse = methods.AddObjectResponse(methodElement);
         break;
       case "DeleteObjectResponse":
-        rpc.cpeResponse = DeleteObjectResponse(methodElement);
-        break;
+        rpc.cpeResponse = methods.DeleteObjectResponse(methodElement);
+        break;/*
       case "RebootResponse":
         rpc.cpeResponse = RebootResponse();
         break;
