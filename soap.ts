@@ -117,9 +117,9 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
         case "GetRPCMethods":
             rpc.cpeRequest = methods.GetRPCMethods();
             break;
-        /*case "TransferComplete":
-          rpc.cpeRequest = TransferComplete(methodElement);
-          break;
+        case "TransferComplete":
+          rpc.cpeRequest = methods.TransferComplete(methodElement);
+          break;/*
         case "RequestDownload":
           rpc.cpeRequest = RequestDownload(methodElement);
           break;*/
