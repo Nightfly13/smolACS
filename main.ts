@@ -308,6 +308,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         body: methods.TransferCompleteResponse(),
         cwmpVersion: rpc.cwmpVersion      
       });
+      return soap.writeResponse(sessionContext, res);
     default:
       console.log("STOP fail with: " + sessionContext.cpeRequests)
       httpResponse.writeHead(200, {});
