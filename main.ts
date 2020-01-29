@@ -7,7 +7,7 @@ import * as soap from "./soap"
 import * as methods from "./methods"
 import { Readable } from "stream";
 import { Socket } from "net";
-import { SessionContext} from "./interfaces";
+import { SessionContext } from "./interfaces";
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
@@ -192,7 +192,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
   if (!rpc.cwmpVersion) rpc.cwmpVersion = sessionContext.cwmpVersion
 
-    let res
+  let res
 
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
     case "end":
@@ -205,104 +205,104 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         return;
       }
 
-      if(!rpc.id) rpc.id = Math.random().toString(36).slice(-8);
+      if (!rpc.id) rpc.id = Math.random().toString(36).slice(-8);
 
       let request = sessionContext.acsRequests.shift()
-        switch(request.name){
-          case "GetParameterNames":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.GetParameterNames({
-                parameterPath: request.parameterPath,
-                nextLevel: request.nextLevel
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "GetParameterValues":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.GetParameterValues({
-                parameterNames: request.parameterNames
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "SetParameterValues":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.SetParameterValues({
-                parameterList: request.parameterList
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "SetParameterAttributes":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.SetParameterAttributes({
-                parameterList: request.setParameterAttributes
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "GetParameterAttributes":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.GetParameterAttributes({
-                parameterNames: request.parameterNames
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "AddObject":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.AddObject({
-                objectName: request.objectName
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "DeleteObject":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.DeleteObject({
-                objectName: request.objectName
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "Reboot":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.Reboot({}),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "FactoryReset":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.FactoryReset(),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          case "Download":
-            res = soap.response({
-              id: rpc.id,
-              body: methods.Download({
-                fileType: request.fileType,
-                url: request.URL,
-                username: request.username,
-                password: request.password,
-                delaySeconds: request.delaySeconds
-              }),
-              cwmpVersion: rpc.cwmpVersion
-            })
-            return soap.writeResponse(sessionContext, res)
-          default:
-            throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
-        }
+      switch (request.name) {
+        case "GetParameterNames":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.GetParameterNames({
+              parameterPath: request.parameterPath,
+              nextLevel: request.nextLevel
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "GetParameterValues":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.GetParameterValues({
+              parameterNames: request.parameterNames
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "SetParameterValues":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.SetParameterValues({
+              parameterList: request.parameterList
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "SetParameterAttributes":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.SetParameterAttributes({
+              parameterList: request.setParameterAttributes
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "GetParameterAttributes":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.GetParameterAttributes({
+              parameterNames: request.parameterNames
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "AddObject":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.AddObject({
+              objectName: request.objectName
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "DeleteObject":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.DeleteObject({
+              objectName: request.objectName
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "Reboot":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.Reboot({}),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "FactoryReset":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.FactoryReset(),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        case "Download":
+          res = soap.response({
+            id: rpc.id,
+            body: methods.Download({
+              fileType: request.fileType,
+              url: request.URL,
+              username: request.username,
+              password: request.password,
+              delaySeconds: request.delaySeconds
+            }),
+            cwmpVersion: rpc.cwmpVersion
+          })
+          return soap.writeResponse(sessionContext, res)
+        default:
+          throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
+      }
     case "Inform":
       res = soap.response({
         id: rpc.id,
@@ -315,7 +315,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         id: rpc.id,
         acsResponse: {
           name: "GetRPCMethodsResponse",
-          methodList: ["Inform", "GetRPCMethods", "TransferComplete"]
+          methodList: ["Inform", "GetRPCMethods", "TransferComplete", "AutonomousTransferComplete"]
         },
         cwmpVersion: rpc.cwmpVersion
       });
@@ -324,14 +324,21 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       res = soap.response({
         id: rpc.id,
         body: methods.TransferCompleteResponse(),
-        cwmpVersion: rpc.cwmpVersion      
+        cwmpVersion: rpc.cwmpVersion
+      });
+      return soap.writeResponse(sessionContext, res);
+    case "AutonomousTransferComplete":
+      res = soap.response({
+        id: rpc.id,
+        body: methods.AutonomousTransferCompleteResponse(),
+        cwmpVersion: rpc.cwmpVersion
       });
       return soap.writeResponse(sessionContext, res);
     case "RequestDownload":
       res = soap.response({
         id: rpc.id,
         body: methods.RequestDownloadResponse(),
-        cwmpVersion: rpc.cwmpVersion      
+        cwmpVersion: rpc.cwmpVersion
       });
       return soap.writeResponse(sessionContext, res);
     default:

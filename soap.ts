@@ -120,6 +120,9 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
     case "TransferComplete":
       rpc.cpeRequest = methods.TransferComplete(methodElement);
       break;
+    case "AutonomousTransferComplete":
+      rpc.cpeRequest = methods.AutonomousTransferComplete(methodElement);
+      break;
     case "RequestDownload":
       rpc.cpeRequest = methods.RequestDownload(methodElement);
       break;

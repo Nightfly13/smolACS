@@ -87,6 +87,18 @@ export interface TransferCompleteRequest extends CpeRequest {
     completeTime?: number;
 }
 
+export interface AutonomousTransferCompleteRequest extends CpeRequest {
+    name: "AutonomousTransferComplete"
+    announceURL?: string;
+    transferURL?: string;
+    isDownload?: boolean;
+    fileSize?: number;
+    targetFileName?: string;
+    faultStruct?: FaultStruct;
+    startTime?: number;
+    completeTime?: number;
+}
+
 export interface CpeSetResponse extends CpeResponse {
     name:
     | "SetParameterValuesResponse"

@@ -1,4 +1,16 @@
-import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest, CpeRequest, FaultStruct, SetParameterAttributesStruct} from "./interfaces"
+import {
+  Element,
+  InformRequest,
+  CpeFault,
+  AcsResponse,
+  CpeGetResponse,
+  CpeSetResponse,
+  TransferCompleteRequest,
+  CpeRequest,
+  FaultStruct,
+  SetParameterAttributesStruct,
+  AutonomousTransferCompleteRequest
+} from "./interfaces"
 import * as soap from "./soap"
 import * as parseFuncs from "./parseFuncs"
 
@@ -38,7 +50,9 @@ export function TransferCompleteResponse(): string {
   return "<cwmp:TransferCompleteResponse></cwmp:TransferCompleteResponse>";
 }
 
-//To-do: add AutonomousTransferCompleteResponse
+export function AutonomousTransferCompleteResponse(): string {
+  return "<cwmp:AutonomousTransferCompleteResponse></cwmp:AutonomousTransferCompleteResponse>";
+}
 
 export function RequestDownloadResponse(): string {
   return "<cwmp:RequestDownloadResponse></cwmp:RequestDownloadResponse>";
@@ -226,7 +240,53 @@ export function TransferComplete(xml: Element): TransferCompleteRequest {
   };
 }
 
-//To-do: add AutonomousTransferComplete
+export function AutonomousTransferComplete(xml: Element): AutonomousTransferCompleteRequest {
+  let announceURL: string, transferURL: string, isDownload: boolean, fileType: string, fileSize: number, targetFileName: string, _faultStruct: FaultStruct, startTime: number, completeTime: number;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "AnnounceURL":
+        announceURL = c.text;
+        break;
+      case "TransferURL":
+        transferURL = c.text;
+        break;
+      case "IsDownload":
+        isDownload = !!c.text;
+        break;
+      case "FileType":
+        fileType = c.text;
+        break;
+      case "FileSize":
+        fileSize = +c.text;
+        break;
+      case "TargetFileName":
+        targetFileName = c.text;
+        break;
+      case "FaultStruct":
+        _faultStruct = soap.faultStruct(c);
+        break;
+      case "StartTime":
+        startTime = Date.parse(c.text);
+        break;
+      case "CompleteTime":
+        completeTime = Date.parse(c.text);
+        break;
+    }
+  }
+
+  return {
+    name: "AutonomousTransferComplete",
+    announceURL: announceURL,
+    transferURL: transferURL,
+    isDownload: isDownload,
+    fileType: fileType,
+    fileSize: fileSize,
+    targetFileName: targetFileName,
+    faultStruct: _faultStruct,
+    startTime: startTime,
+    completeTime: completeTime
+  };
+}
 
 export function RequestDownload(xml: Element): CpeRequest {
   return {
@@ -271,14 +331,14 @@ export function GetParameterNames(methodRequest: { parameterPath: string; nextLe
 }
 
 export function SetParameterAttributes(methodRequest: { parameterList: SetParameterAttributesStruct[]; }): string {
-  const params = methodRequest.parameterList.map(p=> {
+  const params = methodRequest.parameterList.map(p => {
     if (p.notification < 0) p.notification = 0;
     if (p.notification > 6) p.notification = 6;
-    
+
     const accessList = p.accessList.map((e: string) => {
       return `<string>${parseFuncs.encodeEntities("" + e)}</string>`
     })
-    
+
     return `<SetParameterAttributesStruct><Name>${p.name}</Name><NotificationChange>${+p.notificationChange}</NotificationChange><Notification>${p.notification}</Notification><AccessListChange>${+p.accessListChange}</AccessListChange><AccessList>${accessList.join("")}</AccessList></SetParameterAttributesStruct>`;
   });
 
