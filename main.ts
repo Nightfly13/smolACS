@@ -237,6 +237,24 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
               cwmpVersion: rpc.cwmpVersion
             })
             return soap.writeResponse(sessionContext, res)
+          case "SetParameterAttributes":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.SetParameterAttributes({
+                parameterList: request.setParameterAttributes
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
+          case "GetParameterAttributes":
+            res = soap.response({
+              id: rpc.id,
+              body: methods.GetParameterAttributes({
+                parameterNames: request.parameterNames
+              }),
+              cwmpVersion: rpc.cwmpVersion
+            })
+            return soap.writeResponse(sessionContext, res)
           case "AddObject":
             res = soap.response({
               id: rpc.id,
@@ -330,10 +348,22 @@ function createContext(): SessionContext {
     cpeRequests: [],
     acsRequests: [
       {
-        name: "Download", 
-        fileType: "2 Web Content",
-        URL: "https://ichef.bbci.co.uk/news/660/cpsprodpb/16620/production/_91408619_55df76d5-2245-41c1-8031-07a4da3f313f.jpg",
-        delaySeconds: 0
+        name: "GetParameterAttributes",
+        parameterNames: ["InternetGatewayDevice.DeviceInfo.Manufacturer"]
+      },
+      {
+        name: "SetParameterAttributes",
+        setParameterAttributes: [{
+          name: "InternetGatewayDevice.DeviceInfo.Manufacturer",
+          notificationChange: true,
+          notification: 1,
+          accessListChange: true,
+          accessList: ["Subscriber"]
+        }]
+      },
+      {
+        name: "GetParameterAttributes",
+        parameterNames: ["InternetGatewayDevice.DeviceInfo.Manufacturer"]
       }
     ],
     cwmpVersion: "0"

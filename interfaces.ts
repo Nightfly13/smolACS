@@ -124,7 +124,9 @@ export interface GetAcsRequest extends AcsRequest {
     | "DeleteObject"
     | "Reboot"
     | "FactoryReset"
-    | "Download";
+    | "Download"
+    | "GetParameterAttributes"
+    | "SetParameterAttributes";
     parameterNames?: string[];
     parameterPath?: string;
     nextLevel?: boolean;
@@ -145,6 +147,7 @@ export interface GetAcsRequest extends AcsRequest {
     delaySeconds?: number;
     successURL?: string;
     failureURL?: string;
+    setParameterAttributes?: SetParameterAttributesStruct[];
 }
 
 export interface SetParameterAttributesStruct{
