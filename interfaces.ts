@@ -97,7 +97,7 @@ export interface CpeSetResponse extends CpeResponse {
     | "DownloadResponse"
     | "SetParameterAttributesResponse";
     status?: number;
-    instanceNumber?: string;
+    instanceNumber?: number;
     startTime?: number;
     completeTime?: number;
 }
@@ -147,4 +147,10 @@ export interface GetAcsRequest extends AcsRequest {
     failureURL?: string;
 }
 
-
+export interface SetParameterAttributesStruct{
+    name: string;
+    notificationChange: boolean;
+    notification: 0|1|2|3|4|5|6;
+    accessListChange: boolean;
+    accessList: string[]
+}

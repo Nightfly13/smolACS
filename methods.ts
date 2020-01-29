@@ -1,9 +1,9 @@
-import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest, CpeRequest } from "./interfaces"
+import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest, CpeRequest, FaultStruct, SetParameterAttributesStruct} from "./interfaces"
 import * as soap from "./soap"
 import * as parseFuncs from "./parseFuncs"
 
 export function fault(xml: Element): CpeFault {
-  let faultCode, faultString, detail;
+  let faultCode: string, faultString: string, detail: FaultStruct;
   for (const c of xml.children) {
     switch (c.localName) {
       case "faultcode":
@@ -22,7 +22,7 @@ export function fault(xml: Element): CpeFault {
 }
 
 //#region Generate ACS RPC responses
-export function GetRPCMethodsResponse(methodResponse): string {
+export function GetRPCMethodsResponse(methodResponse: { methodList: string[]; }): string {
   return `<cwmp:GetRPCMethodsResponse><MethodList soap-enc:arrayType="xsd:string[${
     methodResponse.methodList.length
     }]">${methodResponse.methodList
@@ -62,7 +62,7 @@ export function GetParameterValuesResponse(xml: Element): CpeGetResponse {
   };
 }
 
-export function GetParameterNamesResponse(xml): CpeGetResponse {
+export function GetParameterNamesResponse(xml: Element): CpeGetResponse {
   return {
     name: "GetParameterNamesResponse",
     parameterList: soap.parameterInfoList(
@@ -71,13 +71,13 @@ export function GetParameterNamesResponse(xml): CpeGetResponse {
   };
 }
 
-export function SetParameterAttributesResponse(xml): CpeSetResponse {
+export function SetParameterAttributesResponse(): CpeSetResponse {
   return {
     name: "SetParameterAttributesResponse"
   };
 }
 
-export function GetParameterAttributesResponse(xml): CpeGetResponse {
+export function GetParameterAttributesResponse(xml: Element): CpeGetResponse {
   return {
     name: "GetParameterAttributesResponse",
     parameterList: soap.parameterInfoList(
@@ -87,7 +87,7 @@ export function GetParameterAttributesResponse(xml): CpeGetResponse {
 }
 
 export function AddObjectResponse(xml: Element): CpeSetResponse {
-  let instanceNumber, status;
+  let instanceNumber: number, status: number;
   for (const c of xml.children) {
     switch (c.localName) {
       case "InstanceNumber":
@@ -114,7 +114,7 @@ export function DeleteObjectResponse(xml: Element): CpeSetResponse {
 }
 
 export function DownloadResponse(xml: Element): CpeSetResponse {
-  let status, startTime, completeTime;
+  let status: number, startTime: number, completeTime: number;
   for (const c of xml.children) {
     switch (c.localName) {
       case "Status":
@@ -161,7 +161,7 @@ export function GetRPCMethods(): AcsResponse {
  * @param xml inform xml object
  */
 export function Inform(xml: Element): InformRequest {
-  let retryCount, evnt, parameterList;
+  let retryCount: number, evnt: string[], parameterList: [string, string | number | boolean, string][];
   const deviceId = {
     Manufacturer: null,
     OUI: null,
@@ -199,7 +199,7 @@ export function Inform(xml: Element): InformRequest {
 }
 
 export function TransferComplete(xml: Element): TransferCompleteRequest {
-  let commandKey, _faultStruct, startTime, completeTime;
+  let commandKey: string, _faultStruct: FaultStruct, startTime: number, completeTime: number;
   for (const c of xml.children) {
     switch (c.localName) {
       case "CommandKey":
@@ -237,8 +237,8 @@ export function RequestDownload(xml: Element): CpeRequest {
 //#endregion
 
 //#region Generate ACS RPC requests
-export function SetParameterValues(methodRequest): string {
-  const params = methodRequest.parameterList.map(p => {
+export function SetParameterValues(methodRequest: { parameterList: any[]; parameterKey?: string; }): string {
+  const params = methodRequest.parameterList.map((p) => {
     let val = p[1];
     if (p[2] === "xsd:dateTime" && typeof val === "number") {
       val = new Date(val).toISOString().replace(".000", "");
@@ -256,40 +256,40 @@ export function SetParameterValues(methodRequest): string {
     ""}</ParameterKey></cwmp:SetParameterValues>`;
 }
 
-export function GetParameterValues(methodRequest): string {
+export function GetParameterValues(methodRequest: { parameterNames: string[]; }): string {
   return `<cwmp:GetParameterValues><ParameterNames soap-enc:arrayType="xsd:string[${
     methodRequest.parameterNames.length
     }]">${methodRequest.parameterNames
-      .map(p => `<string>${p}</string>`)
+      .map((p: string) => `<string>${p}</string>`)
       .join("")}</ParameterNames></cwmp:GetParameterValues>`;
 }
 
-export function GetParameterNames(methodRequest): string {
+export function GetParameterNames(methodRequest: { parameterPath: string; nextLevel: boolean; }): string {
   return `<cwmp:GetParameterNames><ParameterPath>${
     methodRequest.parameterPath
     }</ParameterPath><NextLevel>${+methodRequest.nextLevel}</NextLevel></cwmp:GetParameterNames>`;
 }
 
-export function SetParameterAttributes(methodRequest): string {
-  const params = methodRequest.SetParameterAttributesStruct.map(p => {
-    if (p.Notification < 0) p.Notification = 0;
-    if (p.Notification > 6) p.Notification = 6;
+export function SetParameterAttributes(methodRequest: { parameterList: SetParameterAttributesStruct[]; }): string {
+  const params = methodRequest.parameterList.map(p=> {
+    if (p.notification < 0) p.notification = 0;
+    if (p.notification > 6) p.notification = 6;
     
-    const accessList = p.AccessList.map(e => {
+    const accessList = p.accessList.map((e: string) => {
       return `<string>${parseFuncs.encodeEntities("" + e)}</string>`
     })
     
-    return `<SetParameterAttributesStruct><Name>${p.Name}</Name><NotificationChange>${+p.NotificationChange}</NotificationChange><Notification>${p.Notification}</Notification><AccessListChange>${+p.AccessListChange}</AccessListChange><AccessList>${accessList.join("")}</AccessList></SetParameterAttributesStruct>`;
+    return `<SetParameterAttributesStruct><Name>${p.name}</Name><NotificationChange>${+p.notificationChange}</NotificationChange><Notification>${p.notification}</Notification><AccessListChange>${+p.accessListChange}</AccessListChange><AccessList>${accessList.join("")}</AccessList></SetParameterAttributesStruct>`;
   });
 
   return `<cwmp:SetParameterAttributes><ParameterList soap-enc:arrayType="cwmp:SetParameterAttributesStruct[${
-    methodRequest.SetParameterAttributesStruct.length
+    methodRequest.parameterList.length
     }]">${params.join(
       ""
     )}</ParameterList></cwmp:SetParameterAttributes>`;
 }
 
-export function GetParameterAttributes(methodRequest): string {
+export function GetParameterAttributes(methodRequest: { parameterNames: string[]; }): string {
   return `<cwmp:GetParameterAttributes><ParameterNames soap-enc:arrayType="xsd:string[${
     methodRequest.parameterNames.length
     }]">${methodRequest.parameterNames
@@ -297,21 +297,21 @@ export function GetParameterAttributes(methodRequest): string {
       .join("")}</ParameterNames></cwmp:GetParameterAttributes>`;
 }
 
-export function AddObject(methodRequest): string {
+export function AddObject(methodRequest: { objectName: string; parameterKey?: string; }): string {
   return `<cwmp:AddObject><ObjectName>${
     methodRequest.objectName
     }</ObjectName><ParameterKey>${methodRequest.parameterKey ||
     ""}</ParameterKey></cwmp:AddObject>`;
 }
 
-export function DeleteObject(methodRequest): string {
+export function DeleteObject(methodRequest: { objectName: string; parameterKey?: string; }): string {
   return `<cwmp:DeleteObject><ObjectName>${
     methodRequest.objectName
     }</ObjectName><ParameterKey>${methodRequest.parameterKey ||
     ""}</ParameterKey></cwmp:DeleteObject>`;
 }
 
-export function Download(methodRequest): string {
+export function Download(methodRequest: { fileType: string; url: string; username: string; password: string; delaySeconds: number; commandKey?: string; fileSize?: number; targetFileName?: string; successUrl?: string; failureUrl?: string; }): string {
   return `<cwmp:Download><CommandKey>${methodRequest.commandKey ||
     ""}</CommandKey><FileType>${methodRequest.fileType}</FileType><URL>${
     methodRequest.url
@@ -330,7 +330,7 @@ export function Download(methodRequest): string {
     )}</FailureURL></cwmp:Download>`;
 }
 
-export function Reboot(methodRequest): string {
+export function Reboot(methodRequest: { commandKey?: string; }): string {
   return `<cwmp:Reboot><CommandKey>${methodRequest.commandKey ||
     ""}</CommandKey></cwmp:Reboot>`;
 }
