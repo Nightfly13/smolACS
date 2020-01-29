@@ -8,7 +8,7 @@ export interface Attribute {
 }
 
 export interface CpeGetResponse extends CpeResponse {
-    name: "GetParameterNamesResponse" | "GetParameterValuesResponse";
+    name: "GetParameterNamesResponse" | "GetParameterValuesResponse" | "GetParameterAttributesResponse";
     parameterList?:
     | [string, boolean][]
     | [string, string | number | boolean, string][];
@@ -94,7 +94,8 @@ export interface CpeSetResponse extends CpeResponse {
     | "DeleteObjectResponse"
     | "RebootResponse"
     | "FactoryResetResponse"
-    | "DownloadResponse";
+    | "DownloadResponse"
+    | "SetParameterAttributesResponse";
     status?: number;
     instanceNumber?: string;
     startTime?: number;

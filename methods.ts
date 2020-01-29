@@ -73,10 +73,7 @@ export function GetParameterNamesResponse(xml): CpeGetResponse {
 
 export function SetParameterAttributesResponse(xml): CpeSetResponse {
   return {
-    name: "SetParameterAttributesResponse",
-    parameterList: soap.parameterInfoList(
-      xml.children.find(n => n.localName === "ParameterList")
-    )
+    name: "SetParameterAttributesResponse"
   };
 }
 
@@ -273,12 +270,31 @@ export function GetParameterNames(methodRequest): string {
     }</ParameterPath><NextLevel>${+methodRequest.nextLevel}</NextLevel></cwmp:GetParameterNames>`;
 }
 
-export function SetParameterAttributes(): string {
-  return ""
+export function SetParameterAttributes(methodRequest): string {
+  const params = methodRequest.SetParameterAttributesStruct.map(p => {
+    if (p.Notification < 0) p.Notification = 0;
+    if (p.Notification > 6) p.Notification = 6;
+    
+    const accessList = p.AccessList.map(e => {
+      return `<string>${parseFuncs.encodeEntities("" + e)}</string>`
+    })
+    
+    return `<SetParameterAttributesStruct><Name>${p.Name}</Name><NotificationChange>${+p.NotificationChange}</NotificationChange><Notification>${p.Notification}</Notification><AccessListChange>${+p.AccessListChange}</AccessListChange><AccessList>${accessList.join("")}</AccessList></SetParameterAttributesStruct>`;
+  });
+
+  return `<cwmp:SetParameterAttributes><ParameterList soap-enc:arrayType="cwmp:SetParameterAttributesStruct[${
+    methodRequest.SetParameterAttributesStruct.length
+    }]">${params.join(
+      ""
+    )}</ParameterList></cwmp:SetParameterAttributes>`;
 }
 
-export function GetParameterAttributes(): string {
-  return ""
+export function GetParameterAttributes(methodRequest): string {
+  return `<cwmp:GetParameterAttributes><ParameterNames soap-enc:arrayType="xsd:string[${
+    methodRequest.parameterNames.length
+    }]">${methodRequest.parameterNames
+      .map(p => `<string>${p}</string>`)
+      .join("")}</ParameterNames></cwmp:GetParameterAttributes>`;
 }
 
 export function AddObject(methodRequest): string {
