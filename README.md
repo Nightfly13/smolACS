@@ -18,3 +18,5 @@ it's so smol so very smol
 - [ ] Add support for AutonomousTransferComplete ACS method
 - [x] Add support for GetRPCMethods ACS method
 - [x] Add support for ACS and CPE Inform method
+- [ ] Add support for TLS encryption
+- [ ] Add support for digest encryption
