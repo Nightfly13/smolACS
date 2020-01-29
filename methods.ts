@@ -21,11 +21,7 @@ export function fault(xml: Element): CpeFault {
   return { faultCode, faultString, detail };
 }
 
-//Generate RPC responses
-export function InformResponse(): string {
-  return "<cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse>";
-}
-
+//#region Generate ACS RPC responses
 export function GetRPCMethodsResponse(methodResponse): string {
   return `<cwmp:GetRPCMethodsResponse><MethodList soap-enc:arrayType="xsd:string[${
     methodResponse.methodList.length
@@ -34,13 +30,26 @@ export function GetRPCMethodsResponse(methodResponse): string {
       .join("")}</MethodList></cwmp:GetRPCMethodsResponse>`;
 }
 
-//Parse CPE RPC response values
-export function GetParameterNamesResponse(xml): CpeGetResponse {
+export function InformResponse(): string {
+  return "<cwmp:InformResponse><MaxEnvelopes>1</MaxEnvelopes></cwmp:InformResponse>";
+}
+
+export function TransferCompleteResponse(): string {
+  return "<cwmp:TransferCompleteResponse></cwmp:TransferCompleteResponse>";
+}
+
+//To-do: add AutonomousTransferCompleteResponse
+
+export function RequestDownloadResponse(): string {
+  return "<cwmp:RequestDownloadResponse></cwmp:RequestDownloadResponse>";
+}
+//#endregion
+
+//#region Parse CPE RPC response values
+export function SetParameterValuesResponse(xml: Element): CpeSetResponse {
   return {
-    name: "GetParameterNamesResponse",
-    parameterList: soap.parameterInfoList(
-      xml.children.find(n => n.localName === "ParameterList")
-    )
+    name: "SetParameterValuesResponse",
+    status: parseInt(xml.children.find(n => n.localName === "Status").text)
   };
 }
 
@@ -53,10 +62,30 @@ export function GetParameterValuesResponse(xml: Element): CpeGetResponse {
   };
 }
 
-export function SetParameterValuesResponse(xml: Element): CpeSetResponse {
+export function GetParameterNamesResponse(xml): CpeGetResponse {
   return {
-    name: "SetParameterValuesResponse",
-    status: parseInt(xml.children.find(n => n.localName === "Status").text)
+    name: "GetParameterNamesResponse",
+    parameterList: soap.parameterInfoList(
+      xml.children.find(n => n.localName === "ParameterList")
+    )
+  };
+}
+
+export function SetParameterAttributesResponse(xml): CpeSetResponse {
+  return {
+    name: "SetParameterAttributesResponse",
+    parameterList: soap.parameterInfoList(
+      xml.children.find(n => n.localName === "ParameterList")
+    )
+  };
+}
+
+export function GetParameterAttributesResponse(xml): CpeGetResponse {
+  return {
+    name: "GetParameterAttributesResponse",
+    parameterList: soap.parameterInfoList(
+      xml.children.find(n => n.localName === "ParameterList")
+    )
   };
 }
 
@@ -87,18 +116,6 @@ export function DeleteObjectResponse(xml: Element): CpeSetResponse {
   };
 }
 
-export function RebootResponse(): CpeSetResponse {
-  return {
-    name: "RebootResponse"
-  };
-}
-
-export function FactoryResetResponse(): CpeSetResponse {
-  return {
-    name: "FactoryResetResponse"
-  };
-}
-
 export function DownloadResponse(xml: Element): CpeSetResponse {
   let status, startTime, completeTime;
   for (const c of xml.children) {
@@ -123,14 +140,24 @@ export function DownloadResponse(xml: Element): CpeSetResponse {
   };
 }
 
-export function TransferCompleteResponse(): string {
-  return "<cwmp:TransferCompleteResponse></cwmp:TransferCompleteResponse>";
+export function RebootResponse(): CpeSetResponse {
+  return {
+    name: "RebootResponse"
+  };
 }
 
-export function RequestDownloadResponse(): string {
-  return "<cwmp:RequestDownloadResponse></cwmp:RequestDownloadResponse>";
+//Additional optional CPE response parsing 
+export function FactoryResetResponse(): CpeSetResponse {
+  return {
+    name: "FactoryResetResponse"
+  };
 }
+//#endregion
 
+//#region Parse CPE RPC requests
+export function GetRPCMethods(): AcsResponse {
+  return { name: "GetRPCMethods" };
+}
 
 /**
  * returns object with name, parameter list, device ID, event and retry counter
@@ -174,25 +201,45 @@ export function Inform(xml: Element): InformRequest {
   };
 }
 
+export function TransferComplete(xml: Element): TransferCompleteRequest {
+  let commandKey, _faultStruct, startTime, completeTime;
+  for (const c of xml.children) {
+    switch (c.localName) {
+      case "CommandKey":
+        commandKey = c.text;
+        break;
+      case "FaultStruct":
+        _faultStruct = soap.faultStruct(c);
+        break;
+      case "StartTime":
+        startTime = Date.parse(c.text);
+        break;
+      case "CompleteTime":
+        completeTime = Date.parse(c.text);
+        break;
+    }
+  }
+
+  return {
+    name: "TransferComplete",
+    commandKey: commandKey,
+    faultStruct: _faultStruct,
+    startTime: startTime,
+    completeTime: completeTime
+  };
+}
+
+//To-do: add AutonomousTransferComplete
+
 export function RequestDownload(xml: Element): CpeRequest {
   return {
     name: "RequestDownload",
     fileType: xml.children.find(n => n.localName === "FileType").text
   };
 }
+//#endregion
 
-export function GetRPCMethods(): AcsResponse {
-  return { name: "GetRPCMethods" };
-}
-export function Reboot(methodRequest): string {
-  return `<cwmp:Reboot><CommandKey>${methodRequest.commandKey ||
-    ""}</CommandKey></cwmp:Reboot>`;
-}
-export function FactoryReset(): string {
-  return "<cwmp:FactoryReset></cwmp:FactoryReset>";
-}
-
-//Generate ACS RPC requests
+//#region Generate ACS RPC requests
 export function SetParameterValues(methodRequest): string {
   const params = methodRequest.parameterList.map(p => {
     let val = p[1];
@@ -224,6 +271,14 @@ export function GetParameterNames(methodRequest): string {
   return `<cwmp:GetParameterNames><ParameterPath>${
     methodRequest.parameterPath
     }</ParameterPath><NextLevel>${+methodRequest.nextLevel}</NextLevel></cwmp:GetParameterNames>`;
+}
+
+export function SetParameterAttributes(): string {
+  return ""
+}
+
+export function GetParameterAttributes(): string {
+  return ""
 }
 
 export function AddObject(methodRequest): string {
@@ -258,30 +313,14 @@ export function Download(methodRequest): string {
       methodRequest.failureUrl || ""
     )}</FailureURL></cwmp:Download>`;
 }
-export function TransferComplete(xml: Element): TransferCompleteRequest {
-  let commandKey, _faultStruct, startTime, completeTime;
-  for (const c of xml.children) {
-    switch (c.localName) {
-      case "CommandKey":
-        commandKey = c.text;
-        break;
-      case "FaultStruct":
-        _faultStruct = soap.faultStruct(c);
-        break;
-      case "StartTime":
-        startTime = Date.parse(c.text);
-        break;
-      case "CompleteTime":
-        completeTime = Date.parse(c.text);
-        break;
-    }
-  }
 
-  return {
-    name: "TransferComplete",
-    commandKey: commandKey,
-    faultStruct: _faultStruct,
-    startTime: startTime,
-    completeTime: completeTime
-  };
+export function Reboot(methodRequest): string {
+  return `<cwmp:Reboot><CommandKey>${methodRequest.commandKey ||
+    ""}</CommandKey></cwmp:Reboot>`;
 }
+
+//Additional optional ACS RPC requests
+export function FactoryReset(): string {
+  return "<cwmp:FactoryReset></cwmp:FactoryReset>";
+}
+//#endregion
