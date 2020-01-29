@@ -119,10 +119,10 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
             break;
         case "TransferComplete":
           rpc.cpeRequest = methods.TransferComplete(methodElement);
-          break;/*
+          break;
         case "RequestDownload":
-          rpc.cpeRequest = RequestDownload(methodElement);
-          break;*/
+          rpc.cpeRequest = methods.RequestDownload(methodElement);
+          break;
         case "GetParameterNamesResponse":
             rpc.cpeResponse = methods.GetParameterNamesResponse(methodElement);
             break;

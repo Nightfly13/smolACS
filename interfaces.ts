@@ -85,8 +85,8 @@ export interface TransferCompleteRequest extends CpeRequest {
     faultStruct?: FaultStruct;
     startTime?: number;
     completeTime?: number;
-  }
-  
+}
+
 export interface CpeSetResponse extends CpeResponse {
     name:
     | "SetParameterValuesResponse"
@@ -115,21 +115,21 @@ export interface AcsRequest {
 }
 
 export interface GetAcsRequest extends AcsRequest {
-    name: 
-    | "GetParameterNames" 
-    | "GetParameterValues" 
-    | "SetParameterValues" 
-    | "AddObject" 
+    name:
+    | "GetParameterNames"
+    | "GetParameterValues"
+    | "SetParameterValues"
+    | "AddObject"
     | "DeleteObject"
-    | "Reboot" 
-    | "FactoryReset" 
+    | "Reboot"
+    | "FactoryReset"
     | "Download";
     parameterNames?: string[];
     parameterPath?: string;
     nextLevel?: boolean;
     parameterList?: [string, string | number | boolean, string][];
     objectName?: string;
-    fileType?: 
+    fileType?:
     | "1 Firmware Upgrade Image"
     | "2 Web Content"
     | "3 Vendor Configuration File"

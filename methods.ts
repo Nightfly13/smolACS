@@ -1,4 +1,4 @@
-import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest } from "./interfaces"
+import { Element, InformRequest, CpeFault, AcsResponse, CpeGetResponse, CpeSetResponse, TransferCompleteRequest, CpeRequest } from "./interfaces"
 import * as soap from "./soap"
 import * as parseFuncs from "./parseFuncs"
 
@@ -127,6 +127,10 @@ export function TransferCompleteResponse(): string {
   return "<cwmp:TransferCompleteResponse></cwmp:TransferCompleteResponse>";
 }
 
+export function RequestDownloadResponse(): string {
+  return "<cwmp:RequestDownloadResponse></cwmp:RequestDownloadResponse>";
+}
+
 
 /**
  * returns object with name, parameter list, device ID, event and retry counter
@@ -167,6 +171,13 @@ export function Inform(xml: Element): InformRequest {
     deviceId: deviceId,
     event: evnt,
     retryCount: retryCount
+  };
+}
+
+export function RequestDownload(xml: Element): CpeRequest {
+  return {
+    name: "RequestDownload",
+    fileType: xml.children.find(n => n.localName === "FileType").text
   };
 }
 
