@@ -20,4 +20,4 @@ it's so smol so very smol
 - [x] Add support for ACS and CPE Inform method
 - [ ] Add support for TLS encryption
 - [ ] Add support for digest encryption
-- [ ] Do something with data (save it?)
+- [x] Save data to file
