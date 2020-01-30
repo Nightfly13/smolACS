@@ -170,9 +170,7 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
  * returns an array of arrays populated by parameter name, value and type
  * @param xml 
  */
-export function parameterValueList(
-  xml: Element
-): [string, string | number | boolean, string][] {
+export function parameterValueList(xml: Element): [string, string | number | boolean, string][] {
   return xml.children
     .filter(e => e.localName === "ParameterValueStruct")//filters out elements that arent ParameterValueStruct in xml body
     .map<[string, string | number | boolean, string]>(e => {//for each element 
@@ -254,6 +252,32 @@ export function parameterInfoList(xml: Element): [string, boolean][] {
       return [param, parsed];
     });
 }
+
+export function parameterAttributeList(xml: Element): [string, string , string[]][] {
+  return xml.children
+    .filter(e => e.localName === "ParameterAttributeStruct")//filters out elements that arent ParameterAttributeStruct in xml body
+    .map<[string, string, string[]]>(e => {//for each element 
+      let accessList: string[], param: string, notification: string;
+      for (const c of e.children) {//for each child in element
+        switch (c.localName) {
+          case "Name"://if localName is "Name"
+            param = c.text;//set param to text of child
+            break;
+          case "AccessList"://if localName is "AccessList"
+            accessList = c.children.map(t => {return t.text});//set accessList equal to child
+            break;
+          case "Notification"://if localName is "AccessList"
+            notification = c.text;//set accessList equal to child
+            break;
+        }
+      }
+      
+
+
+      return [param, notification, accessList];//return array with name, value and value type
+    });
+}
+
 
 export function faultStruct(xml: Element): FaultStruct {
   let faultCode, faultString, setParameterValuesFault: SpvFault[], pn, fc, fs;

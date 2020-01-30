@@ -94,7 +94,7 @@ export function SetParameterAttributesResponse(): CpeSetResponse {
 export function GetParameterAttributesResponse(xml: Element): CpeGetResponse {
   return {
     name: "GetParameterAttributesResponse",
-    parameterList: soap.parameterInfoList(
+    parameterList: soap.parameterAttributeList(
       xml.children.find(n => n.localName === "ParameterList")
     )
   };
