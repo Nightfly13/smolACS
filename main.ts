@@ -7,7 +7,8 @@ import * as soap from "./soap"
 import * as methods from "./methods"
 import { Readable } from "stream";
 import { Socket } from "net";
-import { SessionContext } from "./interfaces";
+import { SessionContext, CpeGetResponse } from "./interfaces";
+import { writeFileSync } from "fs";
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
@@ -194,6 +195,10 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
 
   let res
 
+  if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
+    writeResponseToFile(rpc.cpeResponse);
+  }
+
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
     case "end":
       console.log(sessionContext.acsRequests.length)
@@ -218,7 +223,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "GetParameterValues":
           res = soap.response({
             id: rpc.id,
@@ -227,7 +232,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "SetParameterValues":
           res = soap.response({
             id: rpc.id,
@@ -236,7 +241,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "SetParameterAttributes":
           res = soap.response({
             id: rpc.id,
@@ -245,7 +250,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "GetParameterAttributes":
           res = soap.response({
             id: rpc.id,
@@ -254,7 +259,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "AddObject":
           res = soap.response({
             id: rpc.id,
@@ -263,7 +268,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "DeleteObject":
           res = soap.response({
             id: rpc.id,
@@ -272,21 +277,21 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "Reboot":
           res = soap.response({
             id: rpc.id,
             body: methods.Reboot({}),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "FactoryReset":
           res = soap.response({
             id: rpc.id,
             body: methods.FactoryReset(),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         case "Download":
           res = soap.response({
             id: rpc.id,
@@ -299,17 +304,18 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             }),
             cwmpVersion: rpc.cwmpVersion
           })
-          return soap.writeResponse(sessionContext, res)
+          break;
         default:
           throw new Error("Unknown CPE method: " + sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1])
       }
+      break;
     case "Inform":
       res = soap.response({
         id: rpc.id,
         body: methods.InformResponse(),
         cwmpVersion: rpc.cwmpVersion
       });
-      return soap.writeResponse(sessionContext, res);
+      break;
     case "GetRPCMethods":
       res = soap.response({
         id: rpc.id,
@@ -319,28 +325,28 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
         },
         cwmpVersion: rpc.cwmpVersion
       });
-      return soap.writeResponse(sessionContext, res);
+      break;
     case "TransferComplete":
       res = soap.response({
         id: rpc.id,
         body: methods.TransferCompleteResponse(),
         cwmpVersion: rpc.cwmpVersion
       });
-      return soap.writeResponse(sessionContext, res);
+      break;
     case "AutonomousTransferComplete":
       res = soap.response({
         id: rpc.id,
         body: methods.AutonomousTransferCompleteResponse(),
         cwmpVersion: rpc.cwmpVersion
       });
-      return soap.writeResponse(sessionContext, res);
+      break;
     case "RequestDownload":
       res = soap.response({
         id: rpc.id,
         body: methods.RequestDownloadResponse(),
         cwmpVersion: rpc.cwmpVersion
       });
-      return soap.writeResponse(sessionContext, res);
+      break;
     default:
       console.log("STOP fail with: " + sessionContext.cpeRequests)
       httpResponse.writeHead(200, {});
@@ -348,6 +354,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       currentSessions.delete(httpRequest.connection)
       return;
   }
+  return soap.writeResponse(sessionContext, res);
 }
 
 function createContext(): SessionContext {
@@ -355,22 +362,9 @@ function createContext(): SessionContext {
     cpeRequests: [],
     acsRequests: [
       {
-        name: "GetParameterAttributes",
-        parameterNames: ["InternetGatewayDevice.DeviceInfo.Manufacturer"]
-      },
-      {
-        name: "SetParameterAttributes",
-        setParameterAttributes: [{
-          name: "InternetGatewayDevice.DeviceInfo.Manufacturer",
-          notificationChange: true,
-          notification: 1,
-          accessListChange: true,
-          accessList: ["Subscriber"]
-        }]
-      },
-      {
-        name: "GetParameterAttributes",
-        parameterNames: ["InternetGatewayDevice.DeviceInfo.Manufacturer"]
+        name: "GetParameterNames",
+        parameterPath: "InternetGatewayDevice.ManagementServer.",
+        nextLevel: false
       }
     ],
     cwmpVersion: "0"
@@ -383,4 +377,29 @@ function getContext(socket: Socket): SessionContext {
   let sessionContext = createContext()
   currentSessions.set(socket, sessionContext);
   return sessionContext
+}
+
+function writeResponseToFile(cpeResponse: any): void {
+  let fileName = cpeResponse.name + ".json";
+  let data: string = "{";
+
+  console.log(cpeResponse.name)
+  console.log(cpeResponse.parameterList)
+
+  switch (cpeResponse.name) {
+    case "GetParameterValuesResponse":
+      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"value":"${struct[1]}","type":"${struct[2]}"}` }).join(",")
+      break;
+    case "GetParameterNamesResponse":
+      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":"${struct[1]}"` }).join(",")
+      break;
+    case "GetParameterAttributesResponse":
+      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"notification":${struct[1]},"accessList":["${struct[2].join("\",\"")}"]}` }).join(",")
+      break;
+    default:
+      throw Error("Unknown cpeResponse")
+  }
+  data += "}\n"
+
+  writeFileSync(fileName, data, { flag: "a" })
 }
