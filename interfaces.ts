@@ -7,13 +7,6 @@ export interface Attribute {
     value: string;
 }
 
-export interface CpeGetResponse extends CpeResponse {
-    name: "GetParameterNamesResponse" | "GetParameterValuesResponse" | "GetParameterAttributesResponse";
-    parameterList?:
-    | [string, boolean][]
-    | [string, string | number | boolean, string][];
-}
-
 export interface Element {
     name: string;
     namespace: string;
@@ -113,6 +106,15 @@ export interface CpeSetResponse extends CpeResponse {
     startTime?: number;
     completeTime?: number;
 }
+
+export interface CpeGetResponse extends CpeResponse {
+    name: "GetParameterNamesResponse" | "GetParameterValuesResponse" | "GetParameterAttributesResponse";
+    parameterList?:
+    | [string, boolean][]
+    | [string, string | number | boolean, string][]
+    | [string, string, string[]][];
+}
+
 
 export interface SessionContext {
     cpeRequests: string[];

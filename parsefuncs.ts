@@ -314,6 +314,7 @@ export function event(xml: Element): string[] {
         .filter(n => n.localName === "EventStruct")
         .map(c => c.children.find(n => n.localName === "EventCode").text.trim());
 }
+
 /**
  * Decodes the encoded entities (if there are any)
  * @param string 
