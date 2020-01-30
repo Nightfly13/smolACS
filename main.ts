@@ -383,9 +383,6 @@ function writeResponseToFile(cpeResponse: any): void {
   let fileName = cpeResponse.name + ".json";
   let data: string = "{";
 
-  console.log(cpeResponse.name)
-  console.log(cpeResponse.parameterList)
-
   switch (cpeResponse.name) {
     case "GetParameterValuesResponse":
       data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"value":"${struct[1]}","type":"${struct[2]}"}` }).join(",")
