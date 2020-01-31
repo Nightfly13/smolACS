@@ -5,10 +5,10 @@ import * as endFuncs from "./endFuncs"
 import * as parseFuncs from "./parseFuncs"
 import * as soap from "./soap"
 import * as methods from "./methods"
+import * as utils from "./utils"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext, CpeGetResponse } from "./interfaces";
-import { writeFileSync } from "fs";
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
@@ -196,7 +196,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   let res
 
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
-    writeResponseToFile(rpc.cpeResponse);
+    utils.writeResponseToFile(rpc.cpeResponse);
   }
 
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
@@ -377,26 +377,4 @@ function getContext(socket: Socket): SessionContext {
   let sessionContext = createContext()
   currentSessions.set(socket, sessionContext);
   return sessionContext
-}
-
-function writeResponseToFile(cpeResponse: any): void {
-  let fileName = cpeResponse.name + ".json";
-  let data: string = "{";
-
-  switch (cpeResponse.name) {
-    case "GetParameterValuesResponse":
-      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"value":"${struct[1]}","type":"${struct[2]}"}` }).join(",")
-      break;
-    case "GetParameterNamesResponse":
-      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":"${struct[1]}"` }).join(",")
-      break;
-    case "GetParameterAttributesResponse":
-      data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"notification":${struct[1]},"accessList":["${struct[2].join("\",\"")}"]}` }).join(",")
-      break;
-    default:
-      throw Error("Unknown cpeResponse")
-  }
-  data += "}\n"
-
-  writeFileSync(fileName, data, { flag: "a" })
 }
