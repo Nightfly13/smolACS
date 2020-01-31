@@ -1,4 +1,5 @@
 import { Attribute, Element } from "./interfaces"
+import { parse } from "querystring";
 const CHAR_SINGLE_QUOTE = 39;
 const CHAR_DOUBLE_QUOTE = 34;
 const CHAR_LESS_THAN = 60;
@@ -16,6 +17,13 @@ const CHAR_EQUAL = 61;
 const STATE_LESS_THAN = 1;
 const STATE_SINGLE_QUOTE = 2;
 const STATE_DOUBLE_QUOTE = 3;
+
+export function extractValueType(value: any): string{
+    if (parseBool(value) !== null) return "xsd:boolean";
+    if (value == parseInt(value, 10)) return "xsd:int";
+    if (!isNaN(Date.parse(value))) return "xsd:dateTime";
+    return "xsd:string"
+}
 
 /**
  * Returns attributes of an XML declaration
@@ -102,9 +110,9 @@ export function parseAttrs(string: string): Attribute[] {
 }
 
 /**
-* Returns root object of parsed XML
-* @param string XML string
-*/
+ * Returns root object of parsed XML
+ * @param string XML string
+ */
 export function parseXml(string: string): Element {
     const len = string.length;
     let state1 = 0;

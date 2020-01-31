@@ -1,7 +1,7 @@
 # smolACS
 it's so smol so very smol
 ## TO DO:
-- [ ] Make basic UI for selection
+- [x] Make basic UI for selection
 - [x] Add support for GetRPCMethods CPE method
 - [x] Add support for GetParameterNames CPE method
 - [x] Add support for GetParameterValues CPE method

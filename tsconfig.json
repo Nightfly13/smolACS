@@ -9,7 +9,7 @@
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "alwaysStrict": true,
-        "noImplicitReturns": true,
+        "noImplicitReturns": false,
         "strictFunctionTypes": true,
         "allowJs": true
     },
