@@ -1,6 +1,8 @@
 
 import * as cluster from "cluster";
 import { cpus } from "os";
+import { GetAcsRequest } from "./interfaces";
+import { Socket, Server } from "net";
 
 let respawnTimestamp = 0;
 let crashes: number[] = [];
@@ -17,7 +19,7 @@ function fork(): cluster.Worker {
   return w;
 }
 
-function restartWorker(worker, code, signal): void {
+function restartWorker(worker: { process: { pid: any; }; }, code: any, signal: any): void {
   const msg = {
     message: "Worker died",
     pid: worker.process.pid,
@@ -70,23 +72,31 @@ function restartWorker(worker, code, signal): void {
   }, respawnTimestamp - now);
 }
 
-export function start(workerCount, servicePort, serviceAddress): void {
+export function start(workerCount: number, servicePort: number, serviceAddress: string, acsRequests?: GetAcsRequest[]): void {
   cluster.on("listening", (worker, address) => {
     if (
       (address.addressType === 4 || address.addressType === 6) &&
       address.address === serviceAddress &&
       address.port === servicePort
     ) {
-      console.info({
+      /*console.info({
         message: "Worker listening",
         pid: worker.process.pid,
         address: address.address,
         port: address.port
-      });
+      });*/
     }
   });
 
   cluster.on("exit", restartWorker);
+
+  cluster.on("message", (worker: cluster.Worker, message: any, handle: Socket | Server) => {
+    if (message.topic && message.topic === "acsRequests"){
+      worker.send({
+        acsRequests: acsRequests
+      })
+    }
+  })
 
   if (!workerCount) workerCount = Math.max(2, cpus().length);
 

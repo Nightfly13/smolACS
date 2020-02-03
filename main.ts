@@ -24,13 +24,15 @@ const readline = require('readline-sync');
 if (!cluster.worker) { //If the current worker is master
   const WORKER_COUNT = 1; //get worker count from config
 
+  getUserInput();
+
   console.info({ //logs stuff
     message: `genieacs-cwmp starting`,
     pid: process.pid,
     version: VERSION
   });
 
-  cluster.start(WORKER_COUNT, SERVICE_PORT, SERVICE_ADDRESS); //start x workers on x port on x address based on values from config
+  cluster.start(WORKER_COUNT, SERVICE_PORT, SERVICE_ADDRESS, acsRequests); //start x workers on x port on x address based on values from config
 
   process.on("SIGINT", () => { //on SIGINT stop worker
     console.info({
@@ -51,7 +53,14 @@ if (!cluster.worker) { //If the current worker is master
   });
 } else { //if current worker is not master
 
-  getUserInput();
+  process.on("message", (msg) => {
+    console.log("Slave message: " + msg)
+    if (msg.acsRequests) {
+      acsRequests = msg.acsRequests
+    }
+  })
+
+  process.send({ topic: "acsRequests" })
 
   process.on("uncaughtException", err => { //on uncaughtException execute function
     if ((err as NodeJS.ErrnoException).code === "ERR_IPC_DISCONNECTED") return; //Ignores error if it is "ERR_IPC_DISCONNECTED"
@@ -96,7 +105,7 @@ function Sstart(
   networkInterface: string,
   _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; },
   keepAliveTimeout: number = -1
-  ): void {
+): void {
   listener = _listener;
 
   server = http.createServer(listener);
@@ -107,6 +116,8 @@ function Sstart(
 
 let n = 0;
 async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void> {
+
+ //console.log("AcsReq is now: " + acsRequests)
 
   //#region Check that HTTP method is POST
   if (httpRequest.method !== "POST") {//if request method isn't "POST", send/respond with 405 Method Not Allowed
@@ -120,6 +131,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   //#endregion
 
 
+ //console.log("AcsReq is now: " + acsRequests)
 
 
   //#region Decode request if encoded
@@ -139,6 +151,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     }
   }
   //#endregion
+ //console.log("AcsReq is now: " + acsRequests)
 
   //#region Get HTTP body from stream
   const body = await new Promise<Buffer>((resolve, reject) => {//create promise of buffer
@@ -163,11 +176,13 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     stream.on("error", reject); //reject the promise on stream error
   });
   //#endregion
+ //console.log("AcsReq is now: " + acsRequests)
 
   let sessionContext = getContext(httpRequest.connection);
 
   sessionContext.httpRequest = httpRequest
   sessionContext.httpResponse = httpResponse
+ //console.log("AcsReq is now: " + acsRequests)
 
   //#region Find charset
   let charset: string;
@@ -183,6 +198,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     charset = e ? e.value.toLowerCase() : "utf8";//sets charset to found encoding value if it exists; otherwise, use utf8
   }
   //#endregion
+ //console.log("AcsReq is now: " + acsRequests)
 
   const bodyStr = parseFuncs.decodeString(body, charset); //decode body
 
@@ -194,6 +210,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     parseWarnings,
     sessionContext
   );
+ //console.log("AcsReq is now: " + acsRequests)
 
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
   if (!rpc.cwmpVersion) rpc.cwmpVersion = sessionContext.cwmpVersion
@@ -203,21 +220,34 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
     utils.writeResponseToFile(rpc.cpeResponse);
   }
+ //console.log("AcsReq is now: " + acsRequests)
 
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
     case "end":
-      console.log(sessionContext.acsRequests.length)
+      //console.log("1AcsReq is now: " + acsRequests)
+
+      console.log("Requests left: " + sessionContext.acsRequests.length)
       if (sessionContext.acsRequests.length == 0) {
+        //console.log("2AcsReq is now: " + acsRequests)
+
         console.log("STOP")
         httpResponse.writeHead(200, {});
         httpResponse.end()
         currentSessions.delete(httpRequest.connection)
+        //console.log("3AcsReq is now: " + acsRequests)
+
         return;
       }
 
       if (!rpc.id) rpc.id = Math.random().toString(36).slice(-8);
+     // console.log("5AcsReq is now: " + acsRequests)
 
       let request = sessionContext.acsRequests.shift()
+      console.log("Requests left now: " + sessionContext.acsRequests.length)
+      console.log("Request: " + request)
+
+     // console.log("4AcsReq is now: " + acsRequests)
+
       switch (request.name) {
         case "GetParameterNames":
           res = soap.response({
@@ -359,14 +389,16 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       currentSessions.delete(httpRequest.connection)
       return;
   }
+ //console.log("AcsReq is now: " + acsRequests)
+
   return soap.writeResponse(sessionContext, res);
 }
 
 function createContext(): SessionContext {
-  console.log(acsRequests)
+  console.log("In createContext" + acsRequests)
   return {
     cpeRequests: [],
-    acsRequests: acsRequests,
+    acsRequests: [...acsRequests],
     cwmpVersion: "0"
   }
 }
@@ -380,52 +412,52 @@ function getContext(socket: Socket): SessionContext {
 }
 
 function getUserInput(): void {
-  let answer: string,answerTwo: string;
+  let answer: string, answerTwo: string;
   while (true) {
     answer = readline.keyInYN('Do you want to add any requests?\n')
-      if (answer) {
-        answerTwo = readline.question('What request do you want to make?\n1: SetParameterValues\n2: GetParameterValues\n3: GetParameterNames\n4: SetParameterAttributes\n5: GetParameterAttributes\n6: AddObject\n7: DeleteObject\n8: Download\n9: Reboot\n')
-          let request: GetAcsRequest
-          switch (answerTwo) {
-            case '1':
-              request = uifuncs.generateSetParameterValuesRequest(readline);
-              break;
-            case '2':
-              request = uifuncs.generateGetParameterValuesRequest(readline);
-              break;
-            case '3':
-              request = uifuncs.generateGetParameterNamesRequest(readline);
-              break;
-            case '4':
-              request = uifuncs.generateSetParameterAttributesRequest(readline);
-              break;
-            case '5':
-              request = uifuncs.generateGetParameterAttributesRequest(readline);
-              break;
-            case '6':
-              request = uifuncs.generateAddObjectRequest(readline);
-              break;
-            case '7':
-              request = uifuncs.generateDeleteObjectRequest(readline);
-              break;
-            case '8':
-              request = uifuncs.generateDownloadRequest(readline);
-              break;
-            case '9':
-              request = uifuncs.generateRebootRequest(readline);
-              break;
-            default:
-              console.log("Invalid input");
-              request = null;
-              break;
-          }
-
-          console.log(request)
-
-          if (request !== null) acsRequests.push(request)
+    if (answer) {
+      answerTwo = readline.question('What request do you want to make?\n1: SetParameterValues\n2: GetParameterValues\n3: GetParameterNames\n4: SetParameterAttributes\n5: GetParameterAttributes\n6: AddObject\n7: DeleteObject\n8: Download\n9: Reboot\n')
+      let request: GetAcsRequest
+      switch (answerTwo) {
+        case '1':
+          request = uifuncs.generateSetParameterValuesRequest(readline);
+          break;
+        case '2':
+          request = uifuncs.generateGetParameterValuesRequest(readline);
+          break;
+        case '3':
+          request = uifuncs.generateGetParameterNamesRequest(readline);
+          break;
+        case '4':
+          request = uifuncs.generateSetParameterAttributesRequest(readline);
+          break;
+        case '5':
+          request = uifuncs.generateGetParameterAttributesRequest(readline);
+          break;
+        case '6':
+          request = uifuncs.generateAddObjectRequest(readline);
+          break;
+        case '7':
+          request = uifuncs.generateDeleteObjectRequest(readline);
+          break;
+        case '8':
+          request = uifuncs.generateDownloadRequest(readline);
+          break;
+        case '9':
+          request = uifuncs.generateRebootRequest(readline);
+          break;
+        default:
+          console.log("Invalid input");
+          request = null;
+          break;
       }
-      else {
-        return
-      }
+
+      console.log(request)
+
+      if (request !== null) acsRequests.push(request)
+    }
+    else {
+      return
+    }
   }
 }
