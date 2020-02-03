@@ -21,3 +21,4 @@ it's so smol so very smol
 - [ ] Add support for TLS encryption
 - [ ] Add support for digest encryption
 - [x] Save data to file
+- [ ] Add better support for multithreading
