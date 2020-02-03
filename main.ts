@@ -13,7 +13,7 @@ import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
-const SERVICE_PORT = "7547"; // get port from config
+const SERVICE_PORT = 7547; // get port from config
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server;
@@ -92,11 +92,11 @@ if (!cluster.worker) { //If the current worker is master
  * @param keepAliveTimeout keepAliveTimeout for the server
  */
 function Sstart(
-  port,
-  networkInterface,
-  _listener,
+  port: number,
+  networkInterface: string,
+  _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; },
   keepAliveTimeout: number = -1
-): void {
+  ): void {
   listener = _listener;
 
   server = http.createServer(listener);
@@ -106,7 +106,7 @@ function Sstart(
 }
 
 let n = 0;
-async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse) {
+async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void> {
 
   //#region Check that HTTP method is POST
   if (httpRequest.method !== "POST") {//if request method isn't "POST", send/respond with 405 Method Not Allowed
