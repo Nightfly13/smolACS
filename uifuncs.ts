@@ -30,11 +30,11 @@ export function generateGetParameterValuesRequest(readline): GetAcsRequest {
 
 export function generateGetParameterNamesRequest(readline): GetAcsRequest {
     let parameterPath: string, nextLevel: boolean;
-    let answer: any;
+    let answer: string;
     answer = readline.question("Please enter the parameter path\n")
     if (answer.length > 0) parameterPath = answer;
     answer = readline.question("Please enter the value for nextLevel\n")
-    if (answer.length > 0 && parseBool(answer) !== null) nextLevel = answer;
+    if (answer.length > 0 && parseBool(answer) !== null) nextLevel = !!answer;
     return { name: "GetParameterNames", parameterPath: parameterPath, nextLevel: nextLevel };
 }
 
@@ -45,13 +45,13 @@ export function generateSetParameterAttributesRequest(readline): GetAcsRequest {
         answer = readline.question("Please enter the name\n")
         if (answer.length > 0) name = answer;
         answer = readline.question("Please enter the value for notificationChange\n")
-        if (answer.length > 0 && parseBool(answer) !== null) notificationChange = answer;
+        if (answer.length > 0 && parseBool(answer) !== null) notificationChange = !!answer;
         if (parseBool(notificationChange)) {
             answer = readline.question("Please enter the value for notification\n")
             if (answer.length > 0 && parseInt(answer) >= 0 && parseInt(answer) <= 6) notification = answer;
         }
         answer = readline.question("Please enter the value for accessListChange\n")
-        if (answer.length > 0 && parseBool(answer) !== null) accessListChange = answer;
+        if (answer.length > 0 && parseBool(answer) !== null) accessListChange = !!answer;
         if (parseBool(accessListChange)) {
             let runloop = true
             while (runloop) {
@@ -109,7 +109,7 @@ export function generateDownloadRequest(readline): GetAcsRequest {
     if (answer.length > 0) username = answer;
     answer = readline.question("Please enter the password\n")
     if (answer.length > 0) password = answer;
-    return { name: "Download", fileType: fileType, URL: URL, username: username, password: password }
+    return { name: "Download", fileType: fileType, DownloadParams:{ URL: URL, username: username, password: password} }
 }
 
 export function generateRebootRequest(readline): GetAcsRequest {

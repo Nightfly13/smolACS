@@ -24,6 +24,10 @@ export interface CpeRequest {
 
 export interface CpeResponse {
     name: string;
+    parameterList?: 
+    | [string, boolean][]
+    | [string, string | number | boolean, string][]
+    | [string, string, string[]][];
 }
 
 export interface CpeFault {

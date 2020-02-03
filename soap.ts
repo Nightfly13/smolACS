@@ -5,7 +5,7 @@ import { promisify } from "util";
 import * as zlib from "zlib";
 
 const VERSION = require('./package.json').version;
-let warnings;
+let warnings: { message: string; parameter: string; }[];
 
 /**
  * Creates an RPC object from XML and returns it
@@ -13,7 +13,7 @@ let warnings;
  * @param cwmpVersion 
  * @param warn array for warnings
  */
-export function request(body: string, cwmpVersion, warn, sessionContext: SessionContext): SoapMessage {
+export function request(body: string, cwmpVersion: string, warn: { message: string; parameter: string; }[], sessionContext: SessionContext): SoapMessage {
   warnings = warn;
 
   const rpc = {
@@ -65,7 +65,7 @@ export function request(body: string, cwmpVersion, warn, sessionContext: Session
   const methodElement = bodyElement.children[0];//get cwmp method element
 
   if (!rpc.cwmpVersion && methodElement.localName !== "Fault") {//if cwmp version is not defined and methodElement is not "Fault";
-    let namespace, namespaceHref;
+    let namespace: string, namespaceHref: string;
     for (const e of [methodElement, bodyElement, envelope]) {
       namespace = namespace || e.namespace;
       if (e.attrs) {
@@ -280,7 +280,7 @@ export function parameterAttributeList(xml: Element): [string, string , string[]
 
 
 export function faultStruct(xml: Element): FaultStruct {
-  let faultCode, faultString, setParameterValuesFault: SpvFault[], pn, fc, fs;
+  let faultCode: string, faultString: string, setParameterValuesFault: SpvFault[], pn: string, fc: string, fs: string;
   for (const c of xml.children) {
     switch (c.localName) {
       case "FaultCode":
@@ -381,7 +381,7 @@ const deflatePromisified = promisify(zlib.deflate);
  * returns ACS response as an array of format [code, headers, XML data]
  * @param rpc 
  */
-export function response(rpc): { code: number; headers: {}; data: string } {
+export function response(rpc: { id: string; body?: string; cwmpVersion: string; acsResponse?: { name: string; methodList: string[]; }; }): { code: number; headers: {}; data: string } {
   const headers = {
     Server: SERVER_NAME,
     SOAPServer: SERVER_NAME
@@ -452,11 +452,7 @@ export function response(rpc): { code: number; headers: {}; data: string } {
   };
 }
 
-export async function writeResponse(
-  sessionContext: SessionContext,
-  res,
-  close = false
-): Promise<void> {
+export async function writeResponse(sessionContext: SessionContext, res: { code: number; headers: any; data: any; }, close: boolean = false): Promise<void> {
   // Close connection after last request in session
   if (close) res.headers["Connection"] = "close";
 
