@@ -302,10 +302,10 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
             id: rpc.id,
             body: methods.Download({
               fileType: request.fileType,
-              url: request.URL,
-              username: request.username,
-              password: request.password,
-              delaySeconds: request.delaySeconds
+              url: request.DownloadParams.URL,
+              username: request.DownloadParams.username,
+              password: request.DownloadParams.password,
+              delaySeconds: request.DownloadParams.delaySeconds
             }),
             cwmpVersion: rpc.cwmpVersion
           })

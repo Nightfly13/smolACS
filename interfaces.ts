@@ -153,6 +153,11 @@ export interface GetAcsRequest extends AcsRequest {
     | "4 Tone File"
     | "5 Ringer File"
     | "6 Stored Firmware Image"
+    setParameterAttributes?: SetParameterAttributesStruct[];
+    DownloadParams?: DownloadStruct
+}
+
+export interface DownloadStruct{
     URL?: string;
     username?: string;
     password?: string;
@@ -161,7 +166,6 @@ export interface GetAcsRequest extends AcsRequest {
     delaySeconds?: number;
     successURL?: string;
     failureURL?: string;
-    setParameterAttributes?: SetParameterAttributesStruct[];
 }
 
 export interface SetParameterAttributesStruct{
