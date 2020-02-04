@@ -1,4 +1,5 @@
 import * as http from "http";
+import * as https from "https";
 import * as cluster from "./cluster";
 import * as zlib from "zlib";
 import * as endFuncs from "./endFuncs"
@@ -10,13 +11,26 @@ import * as uifuncs from "./uifuncs"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
+import { resolve } from "path";
+import { readFileSync, existsSync } from "fs";
+
+// Find project root directory
+export let ROOT_DIR = resolve(__dirname, "..");
+while (!existsSync(`${ROOT_DIR}/package.json`)) {
+  const d = resolve(ROOT_DIR, "..");
+  if (d === ROOT_DIR) {
+    ROOT_DIR = process.cwd();
+    break;
+  }
+  ROOT_DIR = d;
+}
 
 const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
 let acsRequests: GetAcsRequest[] = [];
-let server: http.Server;
+let server: http.Server | https.Server;
 let listener: (...args: any) => void;
 const currentSessions = new WeakMap<Socket, SessionContext>();
 const readline = require('readline-sync');
@@ -53,6 +67,11 @@ if (!cluster.worker) { //If the current worker is master
   });
 } else { //if current worker is not master
 
+  const ssl = { //create SSL object
+    key: "key.pem", //gets SSL key from config
+    cert: "cert.pem" //gets SSL cert from config
+  };
+
   process.on("message", (msg) => {
     console.log("Slave message: " + msg)
     if (msg.acsRequests) {
@@ -77,7 +96,8 @@ if (!cluster.worker) { //If the current worker is master
     SERVICE_ADDRESS,
     CWlistner,  //listen to incoming http requests
     //cwmp.onConnection, //function to run on succesfull connection to remote device 
-    0
+    0,
+    ssl
   );
 
   process.on("SIGINT", () => {
@@ -104,12 +124,28 @@ function Sstart(
   port: number,
   networkInterface: string,
   _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; },
-  keepAliveTimeout: number = -1
+  keepAliveTimeout: number = -1,
+  ssl: any
 ): void {
   listener = _listener;
 
-  server = http.createServer(listener);
+  if (ssl && ssl.key && ssl.cert) {
+    const options = {
+      key: ssl.key
+        .split(":")
+        .map(f => readFileSync(resolve(ROOT_DIR, f.trim()))),
+      cert: ssl.cert
+        .split(":")
+        .map(f => readFileSync(resolve(ROOT_DIR, f.trim())))
+    };
 
+    server = https.createServer(options, listener);
+    console.log("https")
+    console.log(options)
+  } else {
+    server = http.createServer(listener);
+    console.log("http")
+  }
   if (keepAliveTimeout >= 0) server.keepAliveTimeout = keepAliveTimeout;
   server.listen(port, networkInterface);
 }
