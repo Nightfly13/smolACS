@@ -26,7 +26,7 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
 }
 
 const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "127.0.0.1"; // get interface from config
+const SERVICE_ADDRESS = "192.168.1.101"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
 let acsRequests: GetAcsRequest[] = [];
@@ -41,11 +41,15 @@ if (!cluster.worker) { //If the current worker is master
   getUserInput();
 
   console.info({ //logs stuff
-    message: `genieacs-cwmp starting`,
+    message: `smolACS starting`,
     pid: process.pid,
     version: VERSION
   });
-
+  console.info({ //logs stuff
+    message: SERVICE_ADDRESS+ ' '+ SERVICE_PORT,
+    pid: process.pid,
+    version: VERSION
+  });
   cluster.start(WORKER_COUNT, SERVICE_PORT, SERVICE_ADDRESS, acsRequests); //start x workers on x port on x address based on values from config
 
   process.on("SIGINT", () => { //on SIGINT stop worker
@@ -68,8 +72,8 @@ if (!cluster.worker) { //If the current worker is master
 } else { //if current worker is not master
 
   const ssl = { //create SSL object
-    key: "key.pem", //gets SSL key from config
-    cert: "cert.pem" //gets SSL cert from config
+    key: "",//"key.pem", //gets SSL key from config
+    cert: ""//"cert.pem" //gets SSL cert from config
   };
 
   process.on("message", (msg) => {
@@ -141,7 +145,6 @@ function Sstart(
 
     server = https.createServer(options, listener);
     console.log("https")
-    console.log(options)
   } else {
     server = http.createServer(listener);
     console.log("http")

@@ -34,7 +34,7 @@ export function generateGetParameterNamesRequest(readline): GetAcsRequest {
     answer = readline.question("Please enter the parameter path\n")
     if (answer.length > 0) parameterPath = answer;
     answer = readline.question("Please enter the value for nextLevel\n")
-    if (answer.length > 0 && parseBool(answer) !== null) nextLevel = !!answer;
+    if (answer.length > 0 && parseBool(answer) !== null) nextLevel = parseBool(answer);
     return { name: "GetParameterNames", parameterPath: parameterPath, nextLevel: nextLevel };
 }
 
