@@ -8,6 +8,8 @@ import * as soap from "./soap"
 import * as methods from "./methods"
 import * as utils from "./utils"
 import * as uifuncs from "./uifuncs"
+import * as auth from "./auth"
+import {parse} from "url"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
@@ -29,6 +31,8 @@ const VERSION = require('./package.json').version;
 const SERVICE_ADDRESS = "192.168.1.101"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
+const ConnectionRequestURL = "http://192.168.1.110:1050/cgi-bin/tr069/102024041800807"
+
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;
 let listener: (...args: any) => void;
@@ -46,7 +50,7 @@ if (!cluster.worker) { //If the current worker is master
     version: VERSION
   });
   console.info({ //logs stuff
-    message: SERVICE_ADDRESS+ ' '+ SERVICE_PORT,
+    message: SERVICE_ADDRESS + ' ' + SERVICE_PORT,
     pid: process.pid,
     version: VERSION
   });
@@ -156,7 +160,7 @@ function Sstart(
 let n = 0;
 async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void> {
 
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   //#region Check that HTTP method is POST
   if (httpRequest.method !== "POST") {//if request method isn't "POST", send/respond with 405 Method Not Allowed
@@ -170,7 +174,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   //#endregion
 
 
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
 
   //#region Decode request if encoded
@@ -190,7 +194,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     }
   }
   //#endregion
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   //#region Get HTTP body from stream
   const body = await new Promise<Buffer>((resolve, reject) => {//create promise of buffer
@@ -215,13 +219,13 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     stream.on("error", reject); //reject the promise on stream error
   });
   //#endregion
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   let sessionContext = getContext(httpRequest.connection);
 
   sessionContext.httpRequest = httpRequest
   sessionContext.httpResponse = httpResponse
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   //#region Find charset
   let charset: string;
@@ -237,7 +241,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     charset = e ? e.value.toLowerCase() : "utf8";//sets charset to found encoding value if it exists; otherwise, use utf8
   }
   //#endregion
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   const bodyStr = parseFuncs.decodeString(body, charset); //decode body
 
@@ -249,7 +253,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
     parseWarnings,
     sessionContext
   );
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
   if (!rpc.cwmpVersion) rpc.cwmpVersion = sessionContext.cwmpVersion
@@ -259,7 +263,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
     utils.writeResponseToFile(rpc.cpeResponse);
   }
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {
     case "end":
@@ -279,13 +283,13 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       }
 
       if (!rpc.id) rpc.id = Math.random().toString(36).slice(-8);
-     // console.log("5AcsReq is now: " + acsRequests)
+      // console.log("5AcsReq is now: " + acsRequests)
 
       let request = sessionContext.acsRequests.shift()
       console.log("Requests left now: " + sessionContext.acsRequests.length)
       console.log("Request: " + request)
 
-     // console.log("4AcsReq is now: " + acsRequests)
+      // console.log("4AcsReq is now: " + acsRequests)
 
       switch (request.name) {
         case "GetParameterNames":
@@ -428,7 +432,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
       currentSessions.delete(httpRequest.connection)
       return;
   }
- //console.log("AcsReq is now: " + acsRequests)
+  //console.log("AcsReq is now: " + acsRequests)
 
   return soap.writeResponse(sessionContext, res);
 }
@@ -496,7 +500,88 @@ function getUserInput(): void {
       if (request !== null) acsRequests.push(request)
     }
     else {
+      /*answer = readline.keyInYN('Do you want to start with a Connection Request?\n')
+      if (answer){
+        setTimeout(function(){httpConnectionRequest(ConnectionRequestURL, 3000)}, 1000)
+      }*/
       return
     }
   }
+}
+
+export async function httpConnectionRequest(address: string, timeout: number): Promise<void> {
+  const options: http.RequestOptions = parse(address);
+  if (options.protocol !== "http:")
+    throw new Error("Invalid connection request URL or protocol");
+
+  options.agent = new http.Agent({
+    maxSockets: 1,
+    keepAlive: true
+  });
+
+  let authHeader: {};
+  let username: string = "";
+  let password: string = "";
+
+  while (!authHeader || (username != null && password != null)) {
+    let opts = options;
+    if (authHeader) {
+      if (authHeader["method"] === "Digest") {
+        opts = Object.assign(
+          {
+            headers: {
+              Authorization: auth.solveDigest(
+                username,
+                password,
+                options.path,
+                "GET",
+                null,
+                authHeader
+              )
+            }
+          },
+          options
+        );
+      } else {
+        throw new Error("Unrecognized auth method");
+      }
+    }
+
+    let res = await httpGet(opts, timeout);
+
+    // Workaround for some devices unexpectedly closing the connection
+    if (res.statusCode === 0)
+      res = await httpGet(opts, timeout);
+    if (res.statusCode === 0) throw new Error("Device is offline");
+    if (res.statusCode === 200 || res.statusCode === 204) return;
+    
+    if (res.statusCode === 401 && res.headers["www-authenticate"]) {
+      authHeader = auth.parseWwwAuthenticateHeader(res.headers["www-authenticate"]);
+    } else {
+      throw new Error(
+        `Unexpected response code from device: ${res.statusCode}`
+      );
+    }
+  }
+  throw new Error("Incorrect connection request credentials");
+}
+
+function httpGet(options: http.RequestOptions, timeout): Promise<{ statusCode: number; headers: {} }> {
+  return new Promise((resolve, reject) => {
+    const req = http
+      .get(options, res => {
+        res.resume();
+        resolve({ statusCode: res.statusCode, headers: res.headers });
+      })
+      .on("error", err => {
+        req.abort();
+        reject(new Error("Device is offline"));
+      })
+      .on("socket", socket => {
+        socket.setTimeout(timeout);
+        socket.on("timeout", () => {
+          req.abort();
+        });
+      });
+  });
 }
