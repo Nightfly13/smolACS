@@ -9,7 +9,7 @@ import * as methods from "./methods"
 import * as utils from "./utils"
 import * as uifuncs from "./uifuncs"
 import * as auth from "./auth"
-import {parse} from "url"
+import { parse } from "url"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
@@ -28,10 +28,10 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
 }
 
 const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "192.168.1.101"; // get interface from config
+const SERVICE_ADDRESS = "192.168.1.236"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
-const ConnectionRequestURL = "http://192.168.1.110:1050/cgi-bin/tr069/102024041800807"
+const ConnectionRequestURL = "http://192.168.1.213:1050/cgi-bin/tr069/102024041800807"
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;
@@ -50,7 +50,7 @@ if (!cluster.worker) { //If the current worker is master
     version: VERSION
   });
   console.info({ //logs stuff
-    message: SERVICE_ADDRESS + ' ' + SERVICE_PORT,
+    message: SERVICE_ADDRESS + ':' + SERVICE_PORT,
     pid: process.pid,
     version: VERSION
   });
@@ -128,13 +128,7 @@ if (!cluster.worker) { //If the current worker is master
  * @param onConnection function for when a connection is established
  * @param keepAliveTimeout keepAliveTimeout for the server
  */
-function Sstart(
-  port: number,
-  networkInterface: string,
-  _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; },
-  keepAliveTimeout: number = -1,
-  ssl: any
-): void {
+function Sstart(port: number, networkInterface: string, _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; }, keepAliveTimeout: number = -1, ssl: any): void {
   listener = _listener;
 
   if (ssl && ssl.key && ssl.cert) {
@@ -554,7 +548,7 @@ export async function httpConnectionRequest(address: string, timeout: number): P
       res = await httpGet(opts, timeout);
     if (res.statusCode === 0) throw new Error("Device is offline");
     if (res.statusCode === 200 || res.statusCode === 204) return;
-    
+
     if (res.statusCode === 401 && res.headers["www-authenticate"]) {
       authHeader = auth.parseWwwAuthenticateHeader(res.headers["www-authenticate"]);
     } else {
@@ -585,3 +579,4 @@ function httpGet(options: http.RequestOptions, timeout): Promise<{ statusCode: n
       });
   });
 }
+
