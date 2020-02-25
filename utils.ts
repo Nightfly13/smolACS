@@ -1,6 +1,7 @@
 import { writeFileSync } from "fs";
+import { CpeResponse } from "./interfaces";
 
-export function writeResponseToFile(cpeResponse): void {
+export function writeResponseToFile(cpeResponse: CpeResponse): void {
     let fileName = cpeResponse.name + ".json";
     let data: string = "{";
   
@@ -9,13 +10,13 @@ export function writeResponseToFile(cpeResponse): void {
   
     switch (cpeResponse.name) {
       case "GetParameterValuesResponse":
-        data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"value":"${struct[1]}","type":"${struct[2]}"}` }).join(",")
+        data += (cpeResponse.parameterList as [string, string | number | boolean, string][]).map(struct => { return `"${struct[0]}":{"value":"${struct[1]}","type":"${struct[2]}"}` }).join(",")
         break;
       case "GetParameterNamesResponse":
-        data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":"${struct[1]}"` }).join(",")
+        data += (cpeResponse.parameterList as [string, boolean][]).map(struct => { return `"${struct[0]}":"${struct[1]}"` }).join(",")
         break;
       case "GetParameterAttributesResponse":
-        data += cpeResponse.parameterList.map(struct => { return `"${struct[0]}":{"notification":${struct[1]},"accessList":["${struct[2].join("\",\"")}"]}` }).join(",")
+        data += (cpeResponse.parameterList as [string, string, string[]][]).map(struct => { return `"${struct[0]}":{"notification":${struct[1]},"accessList":["${struct[2].join("\",\"")}"]}` }).join(",")
         break;
       default:
         throw Error("Unknown cpeResponse")
