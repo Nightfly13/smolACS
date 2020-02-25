@@ -1,14 +1,14 @@
 
 import * as cluster from "cluster";
+import { Server, Socket } from "net";
 import { cpus } from "os";
 import { GetAcsRequest } from "./interfaces";
-import { Socket, Server } from "net";
 
-let respawnTimestamp = 0;
+let respawnTimestamp: number = 0;
 let crashes: number[] = [];
 
 function fork(): cluster.Worker {
-  const w = cluster.fork();
+  const w: cluster.Worker = cluster.fork();
   w.on("error", (err: NodeJS.ErrnoException) => {
     // Avoid exception when attempting to kill the process just as it's exiting
     if (err.code !== "EPIPE") throw err;
@@ -19,7 +19,7 @@ function fork(): cluster.Worker {
   return w;
 }
 
-function restartWorker(worker: { process: { pid: any; }; }, code: any, signal: any): void {
+function restartWorker(worker: { process: { pid: number; }; }, code: number, signal: string): void {
   const msg = {
     message: "Worker died",
     pid: worker.process.pid,
@@ -36,9 +36,9 @@ function restartWorker(worker: { process: { pid: any; }; }, code: any, signal: a
   const now = Date.now();
   crashes.push(now);
 
-  let min1 = 0,
-    min2 = 0,
-    min3 = 0;
+  let min1: number = 0,
+    min2: number = 0,
+    min3: number = 0;
 
   crashes = crashes.filter(n => {
     if (n > now - 60000) ++min1;
@@ -90,7 +90,7 @@ export function start(workerCount: number, servicePort: number, serviceAddress: 
 
   cluster.on("exit", restartWorker);
 
-  cluster.on("message", (worker: cluster.Worker, message: any, handle: Socket | Server) => {
+  cluster.on("message", (worker: cluster.Worker, message: {topic: string}, handle: Socket | Server) => {
     if (message.topic && message.topic === "acsRequests"){
       worker.send({
         acsRequests: acsRequests

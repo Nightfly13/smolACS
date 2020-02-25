@@ -1,5 +1,4 @@
 import { writeFileSync } from "fs";
-import { CpeResponse } from "./interfaces";
 
 export function writeResponseToFile(cpeResponse): void {
     let fileName = cpeResponse.name + ".json";

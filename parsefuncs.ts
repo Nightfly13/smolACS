@@ -18,10 +18,10 @@ const STATE_LESS_THAN = 1;
 const STATE_SINGLE_QUOTE = 2;
 const STATE_DOUBLE_QUOTE = 3;
 
-export function extractValueType(value: any): string{
-    if (parseBool(value) !== null) return "xsd:boolean";
-    if (value == parseInt(value, 10)) return "xsd:int";
-    if (!isNaN(Date.parse(value))) return "xsd:dateTime";
+export function extractValueType(value: boolean | string | number): string{
+    if (parseBool((value as boolean | string)) !== null) return "xsd:boolean";
+    if (value == parseInt((value as string), 10)) return "xsd:int";
+    if (!isNaN(Date.parse((value as string)))) return "xsd:dateTime";
     return "xsd:string"
 }
 
@@ -301,7 +301,7 @@ export function parseXml(string: string): Element {
  * checks if true or false and returns appropriately 
  * @param v 
  */
-export function parseBool(v): boolean {
+export function parseBool(v: string | boolean): boolean {
     v = "" + v;
     if (v === "true" || v === "TRUE" || v === "True" || v === "1") return true;
     else if (v === "false" || v === "FALSE" || v === "False" || v === "0")
@@ -309,7 +309,7 @@ export function parseBool(v): boolean {
     else return null;
 }
 
-export function getValueType(str): string {
+export function getValueType(str: string): string {
     return parseAttrs(str).find(s => s.localName === "type").value.trim()
 }
 
@@ -328,8 +328,8 @@ export function event(xml: Element): string[] {
  * @param string 
  */
 
-export function decodeEntities(string): string {
-    return string.replace(/&[0-9a-z#]+;/gi, match => {
+export function decodeEntities(string: string): string {
+    return string.replace(/&[0-9a-z#]+;/gi, (match: string) => {
         switch (match) {
             case "&quot;":
                 return '"';
@@ -370,7 +370,7 @@ export function decodeString(buffer: Buffer, charset: string): string {
     return buffer.toString(charset);
 }
 
-export function encodeEntities(string): string {
+export function encodeEntities(string: string): string {
     const entities = {
       "&": "&amp;",
       '"': "&quot;",
@@ -378,5 +378,5 @@ export function encodeEntities(string): string {
       "<": "&lt;",
       ">": "&gt;"
     };
-    return string.replace(/[&"'<>]/g, m => entities[m]);
+    return string.replace(/[&"'<>]/g, (m: string | number) => entities[m]);
   }

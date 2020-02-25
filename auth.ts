@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, Hash } from "crypto";
 
 /**
  * generate MD5 digest response
@@ -40,7 +40,7 @@ export function digest(
         "nc": nc
     })
 
-    const ha1 = createHash("md5");  //create hash object
+    const ha1: Hash = createHash("md5");  //create hash object
     ha1 //add elements listed below
         .update(username)
         .update(":")
@@ -48,9 +48,9 @@ export function digest(
         .update(":")
         .update(password);
     // TODO support "MD5-sess" algorithm directive
-    const ha1d = ha1.digest("hex"); //get the digest
+    const ha1d: string = ha1.digest("hex"); //get the digest
 
-    const ha2 = createHash("md5"); //create hash object
+    const ha2: Hash = createHash("md5"); //create hash object
     ha2 //add elements listed below
         .update(httpMethod)
         .update(":")
@@ -63,9 +63,9 @@ export function digest(
         ha2.update(":").update(bodyHash); //add digest to ha2 hash
     }
 
-    const ha2d = ha2.digest("hex"); //get the digest
+    const ha2d: string = ha2.digest("hex"); //get the digest
 
-    const hash = createHash("md5"); //create hash object
+    const hash: Hash = createHash("md5"); //create hash object
     hash
         .update(ha1d) //add HA1's digest
         .update(":")
@@ -81,7 +81,7 @@ export function digest(
     }
     hash.update(":").update(ha2d); //add HA2's digest
 
-    let res = hash.digest("hex");
+    let res: string = hash.digest("hex");
 
     console.log("Exiting Digest with val: " + res)
 

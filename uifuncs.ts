@@ -1,61 +1,62 @@
 import { extractValueType, parseBool } from "./parsefuncs"
 import { SetParameterAttributesStruct, GetAcsRequest } from "./interfaces";
+import { question, keyInYN }  from 'readline-sync';
 
-export function generateSetParameterValuesRequest(readline): GetAcsRequest {
+export function generateSetParameterValuesRequest(): GetAcsRequest {
     let parameterList: [string, string | number | boolean, string][] = [], name: string, value: string, type: string;
-    let answer: string;
+    let answer: string | boolean;
     while (true) {
-        answer = readline.question("Please enter the name\n")
+        answer = question("Please enter the name\n")
         if (answer.length > 0) name = answer;
-        answer = readline.question("Please enter the value\n")
+        answer = question("Please enter the value\n")
         if (answer.length > 0) value = answer;
         type = extractValueType(value);
         parameterList.push([name, value, type]);
-        answer = readline.keyInYN("Do you want to add another value? \n")
+        answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "SetParameterValues", parameterList: parameterList };
     }
 }
 
-export function generateGetParameterValuesRequest(readline): GetAcsRequest {
+export function generateGetParameterValuesRequest(): GetAcsRequest {
     let parameterNames: string[] = [], name: string;
-    let answer: string;
+    let answer: string | boolean;
     while (true) {
-        answer = readline.question("Please enter the name\n")
+        answer = question("Please enter the name\n")
         if (answer.length > 0) name = answer;
         parameterNames.push(name);
-        answer = readline.keyInYN("Do you want to add another value? \n")
+        answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "GetParameterValues", parameterNames: parameterNames };
     }
 }
 
-export function generateGetParameterNamesRequest(readline): GetAcsRequest {
+export function generateGetParameterNamesRequest(): GetAcsRequest {
     let parameterPath: string, nextLevel: boolean;
     let answer: string;
-    answer = readline.question("Please enter the parameter path\n")
+    answer = question("Please enter the parameter path\n")
     if (answer.length > 0) parameterPath = answer;
-    answer = readline.question("Please enter the value for nextLevel\n")
+    answer = question("Please enter the value for nextLevel\n")
     if (answer.length > 0 && parseBool(answer) !== null) nextLevel = parseBool(answer);
     return { name: "GetParameterNames", parameterPath: parameterPath, nextLevel: nextLevel };
 }
 
-export function generateSetParameterAttributesRequest(readline): GetAcsRequest {
+export function generateSetParameterAttributesRequest(): GetAcsRequest {
     let setParameterAttributes: SetParameterAttributesStruct[] = [], name: string, notificationChange: boolean, notification: 0 | 1 | 2 | 3 | 4 | 5 | 6, accessListChange: boolean, accessList: string[] = [];
-    let answer: any;
+    let answer: string | boolean;
     while (true) {
-        answer = readline.question("Please enter the name\n")
+        answer = question("Please enter the name\n")
         if (answer.length > 0) name = answer;
-        answer = readline.question("Please enter the value for notificationChange\n")
+        answer = question("Please enter the value for notificationChange\n")
         if (answer.length > 0 && parseBool(answer) !== null) notificationChange = !!answer;
         if (parseBool(notificationChange)) {
-            answer = readline.question("Please enter the value for notification\n")
-            if (answer.length > 0 && parseInt(answer) >= 0 && parseInt(answer) <= 6) notification = answer;
+            answer = question("Please enter the value for notification\n")
+            if (answer.length > 0 && parseInt(answer) >= 0 && parseInt(answer) <= 6) notification = (answer as unknown as 0 | 1 | 2 | 3 | 4 | 5 | 6);
         }
-        answer = readline.question("Please enter the value for accessListChange\n")
+        answer = question("Please enter the value for accessListChange\n")
         if (answer.length > 0 && parseBool(answer) !== null) accessListChange = !!answer;
         if (parseBool(accessListChange)) {
             let runloop = true
             while (runloop) {
-                answer = readline.question("What do you want to add to access list?\n")
+                answer = question("What do you want to add to access list?\n")
                 if (answer.length > 0) {
                     accessList.push(answer)
                 } else {
@@ -64,56 +65,56 @@ export function generateSetParameterAttributesRequest(readline): GetAcsRequest {
             }
         }
         setParameterAttributes.push({name: name, notificationChange: notificationChange, notification: notification, accessListChange: accessListChange, accessList:accessList});
-        answer = readline.keyInYN("Do you want to add another value? \n")
+        answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "SetParameterAttributes", setParameterAttributes: setParameterAttributes };
     }
 }
 
-export function generateGetParameterAttributesRequest(readline): GetAcsRequest {
+export function generateGetParameterAttributesRequest(): GetAcsRequest {
     let parameterNames: string[]= [], name: string;
-    let answer: string;
+    let answer: string | boolean;
     while (true) {
-        answer = readline.question("Please enter the name\n")
+        answer = question("Please enter the name\n")
         if (answer.length > 0) name = answer;
         parameterNames.push(name);
-        answer = readline.keyInYN("Do you want to add another value? \n")
+        answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "GetParameterAttributes", parameterNames: parameterNames };
     }
 }
 
-export function generateAddObjectRequest(readline): GetAcsRequest {
+export function generateAddObjectRequest(): GetAcsRequest {
     let objectName: string;
     let answer: string;
-    answer = readline.question("Please enter the object name\n")
+    answer = question("Please enter the object name\n")
     if (answer.length > 0) objectName = answer;
     return { name: "AddObject", objectName: objectName };
 }
 
-export function generateDeleteObjectRequest(readline): GetAcsRequest {
+export function generateDeleteObjectRequest(): GetAcsRequest {
     let objectName: string;
     let answer: string;
-    answer = readline.question("Please enter the object name\n")
+    answer = question("Please enter the object name\n")
     if (answer.length > 0) objectName = answer;
     return { name: "DeleteObject", objectName: objectName };
 }
 
-export function generateDownloadRequest(readline): GetAcsRequest {
+export function generateDownloadRequest(): GetAcsRequest {
     let answer: string;
     let answer2: GetAcsRequest["fileType"];
     let fileType: GetAcsRequest["fileType"], URL: string, username: string, password: string;
-    answer2 = readline.question("Please enter the file type\n")
+    answer2 = question("Please enter the file type\n") as GetAcsRequest["fileType"];
     if (answer2.length > 0) fileType = answer2;
-    answer = readline.question("Please enter the URL\n")
+    answer = question("Please enter the URL\n")
     if (answer.length > 0) URL = answer;
-    answer = readline.question("Please enter the username\n")
+    answer = question("Please enter the username\n")
     if (answer.length > 0) username = answer;
-    answer = readline.question("Please enter the password\n")
+    answer = question("Please enter the password\n")
     if (answer.length > 0) password = answer;
     return { name: "Download", fileType: fileType, DownloadParams:{ URL: URL, username: username, password: password} }
 }
 
-export function generateRebootRequest(readline): GetAcsRequest {
-    let answer: string;
-    answer = readline.keyInYN("Are you sure you want to reboot? \n")
+export function generateRebootRequest(): GetAcsRequest {
+    let answer: string | boolean;
+    answer = keyInYN("Are you sure you want to reboot? \n")
     if (answer) return { name: "Reboot" }
 }

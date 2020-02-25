@@ -15,6 +15,7 @@ import { Socket } from "net";
 import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
 import { resolve } from "path";
 import { readFileSync, existsSync } from "fs";
+import { question, keyInYN }  from 'readline-sync';
 
 // Find project root directory
 export let ROOT_DIR = resolve(__dirname, "..");
@@ -35,9 +36,7 @@ const ConnectionRequestURL = "http://192.168.1.213:1050/cgi-bin/tr069/1020240418
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;
-let listener: (...args: any) => void;
 const currentSessions = new WeakMap<Socket, SessionContext>();
-const readline = require('readline-sync');
 //#region 
 if (!cluster.worker) { //If the current worker is master
   const WORKER_COUNT = 1; //get worker count from config
@@ -102,10 +101,10 @@ if (!cluster.worker) { //If the current worker is master
   Sstart(
     SERVICE_PORT,
     SERVICE_ADDRESS,
+    ssl,
     CWlistner,  //listen to incoming http requests
     //cwmp.onConnection, //function to run on succesfull connection to remote device 
     0,
-    ssl
   );
 
   process.on("SIGINT", () => {
@@ -125,26 +124,25 @@ if (!cluster.worker) { //If the current worker is master
  * @param networkInterface interface to connect to
  * @param ssl ssl object with key and cert if required
  * @param _listener function for when a request occurs
- * @param onConnection function for when a connection is established
  * @param keepAliveTimeout keepAliveTimeout for the server
  */
-function Sstart(port: number, networkInterface: string, _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>; (...args: any): void; }, keepAliveTimeout: number = -1, ssl: any): void {
-  listener = _listener;
+function Sstart(port: number, networkInterface: string, ssl: { key: string; cert: string; }, _listener: { (httpRequest: http.IncomingMessage, httpResponse: http.ServerResponse): Promise<void>;}, keepAliveTimeout: number = -1): void {
+  //listener = _listener;
 
   if (ssl && ssl.key && ssl.cert) {
     const options = {
       key: ssl.key
         .split(":")
-        .map(f => readFileSync(resolve(ROOT_DIR, f.trim()))),
+        .map((f: string) => readFileSync(resolve(ROOT_DIR, f.trim()))),
       cert: ssl.cert
         .split(":")
-        .map(f => readFileSync(resolve(ROOT_DIR, f.trim())))
+        .map((f: string) => readFileSync(resolve(ROOT_DIR, f.trim())))
     };
 
-    server = https.createServer(options, listener);
+    server = https.createServer(options, _listener);
     console.log("https")
   } else {
-    server = http.createServer(listener);
+    server = http.createServer(_listener);
     console.log("http")
   }
   if (keepAliveTimeout >= 0) server.keepAliveTimeout = keepAliveTimeout;
@@ -252,7 +250,7 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
   if (sessionContext.cwmpVersion == "0") sessionContext.cwmpVersion = rpc.cwmpVersion
   if (!rpc.cwmpVersion) rpc.cwmpVersion = sessionContext.cwmpVersion
 
-  let res: { code: number; headers: {}; data: string; }
+  let res: { code: number; headers: string | {}; data: string; }
 
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
     utils.writeResponseToFile(rpc.cpeResponse);
@@ -449,39 +447,39 @@ function getContext(socket: Socket): SessionContext {
 }
 
 function getUserInput(): void {
-  let answer: string, answerTwo: string;
+  let answer: string | boolean, answerTwo: string;
   while (true) {
-    answer = readline.keyInYN('Do you want to add any requests?\n')
+    answer = keyInYN('Do you want to add any requests?\n')
     if (answer) {
-      answerTwo = readline.question('What request do you want to make?\n1: SetParameterValues\n2: GetParameterValues\n3: GetParameterNames\n4: SetParameterAttributes\n5: GetParameterAttributes\n6: AddObject\n7: DeleteObject\n8: Download\n9: Reboot\n')
+      answerTwo = question('What request do you want to make?\n1: SetParameterValues\n2: GetParameterValues\n3: GetParameterNames\n4: SetParameterAttributes\n5: GetParameterAttributes\n6: AddObject\n7: DeleteObject\n8: Download\n9: Reboot\n')
       let request: GetAcsRequest
       switch (answerTwo) {
         case '1':
-          request = uifuncs.generateSetParameterValuesRequest(readline);
+          request = uifuncs.generateSetParameterValuesRequest();
           break;
         case '2':
-          request = uifuncs.generateGetParameterValuesRequest(readline);
+          request = uifuncs.generateGetParameterValuesRequest();
           break;
         case '3':
-          request = uifuncs.generateGetParameterNamesRequest(readline);
+          request = uifuncs.generateGetParameterNamesRequest();
           break;
         case '4':
-          request = uifuncs.generateSetParameterAttributesRequest(readline);
+          request = uifuncs.generateSetParameterAttributesRequest();
           break;
         case '5':
-          request = uifuncs.generateGetParameterAttributesRequest(readline);
+          request = uifuncs.generateGetParameterAttributesRequest();
           break;
         case '6':
-          request = uifuncs.generateAddObjectRequest(readline);
+          request = uifuncs.generateAddObjectRequest();
           break;
         case '7':
-          request = uifuncs.generateDeleteObjectRequest(readline);
+          request = uifuncs.generateDeleteObjectRequest();
           break;
         case '8':
-          request = uifuncs.generateDownloadRequest(readline);
+          request = uifuncs.generateDownloadRequest();
           break;
         case '9':
-          request = uifuncs.generateRebootRequest(readline);
+          request = uifuncs.generateRebootRequest();
           break;
         default:
           console.log("Invalid input");
@@ -494,7 +492,7 @@ function getUserInput(): void {
       if (request !== null) acsRequests.push(request)
     }
     else {
-      /*answer = readline.keyInYN('Do you want to start with a Connection Request?\n')
+      /*answer = keyInYN('Do you want to start with a Connection Request?\n')
       if (answer){
         setTimeout(function(){httpConnectionRequest(ConnectionRequestURL, 3000)}, 1000)
       }*/
@@ -560,7 +558,7 @@ export async function httpConnectionRequest(address: string, timeout: number): P
   throw new Error("Incorrect connection request credentials");
 }
 
-function httpGet(options: http.RequestOptions, timeout): Promise<{ statusCode: number; headers: {} }> {
+function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statusCode: number; headers: {} }> {
   return new Promise((resolve, reject) => {
     const req = http
       .get(options, res => {

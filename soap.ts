@@ -452,7 +452,7 @@ export function response(rpc: { id: string; body?: string; cwmpVersion: string; 
   };
 }
 
-export async function writeResponse(sessionContext: SessionContext, res: { code: number; headers: any; data: any; }, close: boolean = false): Promise<void> {
+export async function writeResponse(sessionContext: SessionContext, res: { code: number; headers: string | {}; data: string; }, close: boolean = false): Promise<void> {
   // Close connection after last request in session
   if (close) res.headers["Connection"] = "close";
 
@@ -463,17 +463,17 @@ export async function writeResponse(sessionContext: SessionContext, res: { code:
     switch (sessionContext.httpRequest.headers["content-encoding"]) {
       case "gzip":
         res.headers["Content-Encoding"] = "gzip";
-        data = await gzipPromisified(data);
+        data = await gzipPromisified((data as zlib.InputType)) as any;
         break;
       case "deflate":
         res.headers["Content-Encoding"] = "deflate";
-        data = await deflatePromisified(data);
+        data = await deflatePromisified((data as zlib.InputType)) as any;
     }
   }
 
   const httpResponse = sessionContext.httpResponse;
 
-  httpResponse.setHeader("Content-Length", Buffer.byteLength(data));
-  httpResponse.writeHead(res.code, res.headers);
+  httpResponse.setHeader("Content-Length", Buffer.byteLength((data as string)));
+  httpResponse.writeHead(res.code, (res.headers as string));
   httpResponse.end(data);
 }

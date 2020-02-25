@@ -25,7 +25,7 @@ export function fault(xml: Element): CpeFault {
         faultString = parseFuncs.decodeEntities(c.text);
         break;
       case "detail":
-        detail = soap.faultStruct(c.children.find(n => n.localName === "Fault"));
+        detail = soap.faultStruct(c.children.find((n: { localName: string; }) => n.localName === "Fault"));
         break;
     }
   }
@@ -297,7 +297,7 @@ export function RequestDownload(xml: Element): CpeRequest {
 //#endregion
 
 //#region Generate ACS RPC requests
-export function SetParameterValues(methodRequest: { parameterList: any[]; parameterKey?: string; }): string {
+export function SetParameterValues(methodRequest: { parameterList: [string, string | boolean | number, string][]; parameterKey?: string; }): string {
   const params = methodRequest.parameterList.map((p) => {
     let val = p[1];
     if (p[2] === "xsd:dateTime" && typeof val === "number") {
