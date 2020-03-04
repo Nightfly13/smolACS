@@ -12,7 +12,7 @@ import * as auth from "./auth"
 import { parse } from "url"
 import { Readable } from "stream";
 import { Socket } from "net";
-import { SessionContext, GetAcsRequest, SoapMessage } from "./interfaces";
+import { SessionContext, GetAcsRequest, SoapMessage, CpeGetResponse } from "./interfaces";
 import { resolve } from "path";
 import { readFileSync, existsSync } from "fs";
 import { question, keyInYN }  from 'readline-sync';
@@ -254,12 +254,12 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
 
   //Save response to JSON file
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
-    utils.writeResponseToFile(rpc.cpeResponse);
+    utils.writeResponseToFile(rpc.cpeResponse as CpeGetResponse);
   }
 
   //Send information about AP to DB
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse.name == "GetParameterValuesResponse"){
-    utils.getConnectionInfo(rpc.cpeResponse);
+    utils.getConnectionInfo(rpc.cpeResponse as CpeGetResponse);
   }
 
   //console.log("AcsReq is now: " + acsRequests)
