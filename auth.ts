@@ -146,7 +146,7 @@ export function solveDigest(
 
 
 
-export function parseWwwAuthenticateHeader(authHeader): {} {
+export function parseWwwAuthenticateHeader(authHeader: string): {} {
     authHeader = authHeader.trim();
     const method = authHeader.split(" ", 1)[0];
     const res = { method: method };
@@ -175,7 +175,7 @@ function parseHeaderFeilds(str: string): {} {
     //opaque="5ccc069c403ebaf9f0171e9517f40e41"
     const res = {};
     const parts = str.split(","); //split string into name and value pairs based on commas
-    let part;
+    let part: string;
     while ((part = parts.shift()) != null) { //pop element off array and check if it's null
         const name = part.split("=", 1)[0]; //get name 
         if (name.length === part.length) { // check if there is value
@@ -184,13 +184,13 @@ function parseHeaderFeilds(str: string): {} {
         }
 
         let value = part.slice(name.length + 1); //everything that comes after equals 
-        if (!/^\s*"/.test(value)) { //if it doesn't start with whitespace and "
+        if (!RegExp('^\s*"').test(value)) {//if it doesn't start with whitespace and "
             value = value.trim(); //set value equal to trimmed value
         } else {
-            while (!/[^\\]"\s*$/.test(value)) { //while it doesn't end with \" 
+            while (!RegExp('[^\\]"\s*$').test(value)) { //while it doesn't end with \" 
                 const p = parts.shift(); //get the next part
                 if (p == null) throw new Error("Unable to parse auth header"); //if p is null then throw an error
-                value += "," + p; //apend comma and p to value
+                value += "," + p; //append comma and p to value
             }
 
             try {
@@ -199,7 +199,7 @@ function parseHeaderFeilds(str: string): {} {
                 throw new Error("Unable to parse auth header"); //throw error
             }
         }
-        res[name.trim()] = value; //add value to res index name
+        res[name.trim()] = value; //add value to res[name]
     }
     return res;
 }
