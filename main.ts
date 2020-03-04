@@ -252,9 +252,16 @@ async function CWlistner(httpRequest: http.IncomingMessage, httpResponse: http.S
 
   let res: { code: number; headers: string | {}; data: string; }
 
+  //Save response to JSON file
   if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse !== null && rpc.cpeResponse.hasOwnProperty("parameterList")) {
     utils.writeResponseToFile(rpc.cpeResponse);
   }
+
+  //Send information about AP to DB
+  if (rpc.hasOwnProperty("cpeResponse") && rpc.cpeResponse.name == "GetParameterValuesResponse"){
+    utils.getConnectionInfo(rpc.cpeResponse);
+  }
+
   //console.log("AcsReq is now: " + acsRequests)
 
   switch (sessionContext.cpeRequests[sessionContext.cpeRequests.length - 1]) {

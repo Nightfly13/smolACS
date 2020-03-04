@@ -7,9 +7,9 @@ export function generateSetParameterValuesRequest(): GetAcsRequest {
     let answer: string | boolean;
     while (true) {
         answer = question("Please enter the name\n")
-        if (answer.length > 0) name = answer;
+        if ((answer as string).length > 0) name = answer as string;
         answer = question("Please enter the value\n")
-        if (answer.length > 0) value = answer;
+        if ((answer as string).length > 0) value = answer as string;
         type = extractValueType(value);
         parameterList.push([name, value, type]);
         answer = keyInYN("Do you want to add another value? \n")
@@ -22,7 +22,7 @@ export function generateGetParameterValuesRequest(): GetAcsRequest {
     let answer: string | boolean;
     while (true) {
         answer = question("Please enter the name\n")
-        if (answer.length > 0) name = answer;
+        if ((answer as string).length > 0) name = answer as string;
         parameterNames.push(name);
         answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "GetParameterValues", parameterNames: parameterNames };
@@ -44,21 +44,21 @@ export function generateSetParameterAttributesRequest(): GetAcsRequest {
     let answer: string | boolean;
     while (true) {
         answer = question("Please enter the name\n")
-        if (answer.length > 0) name = answer;
+        if ((answer as string).length > 0) name = answer as string;
         answer = question("Please enter the value for notificationChange\n")
-        if (answer.length > 0 && parseBool(answer) !== null) notificationChange = !!answer;
+        if ((answer as string).length > 0 && parseBool(answer) !== null) notificationChange = !!answer;
         if (parseBool(notificationChange)) {
             answer = question("Please enter the value for notification\n")
-            if (answer.length > 0 && parseInt(answer) >= 0 && parseInt(answer) <= 6) notification = (answer as unknown as 0 | 1 | 2 | 3 | 4 | 5 | 6);
+            if ((answer as string).length > 0 && parseInt((answer as string)) >= 0 && parseInt((answer as string)) <= 6) notification = (answer as unknown as 0 | 1 | 2 | 3 | 4 | 5 | 6);
         }
         answer = question("Please enter the value for accessListChange\n")
-        if (answer.length > 0 && parseBool(answer) !== null) accessListChange = !!answer;
+        if ((answer as string).length > 0 && parseBool(answer) !== null) accessListChange = !!answer;
         if (parseBool(accessListChange)) {
             let runloop = true
             while (runloop) {
                 answer = question("What do you want to add to access list?\n")
-                if (answer.length > 0) {
-                    accessList.push(answer)
+                if ((answer as string).length > 0) {
+                    accessList.push((answer as string))
                 } else {
                     runloop = false
                 }
@@ -75,7 +75,7 @@ export function generateGetParameterAttributesRequest(): GetAcsRequest {
     let answer: string | boolean;
     while (true) {
         answer = question("Please enter the name\n")
-        if (answer.length > 0) name = answer;
+        if ((answer as string).length > 0) name = answer as string;
         parameterNames.push(name);
         answer = keyInYN("Do you want to add another value? \n")
         if (!answer) return { name: "GetParameterAttributes", parameterNames: parameterNames };
