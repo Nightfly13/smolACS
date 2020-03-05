@@ -29,10 +29,10 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
 }
 
 const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "192.168.1.236"; // get interface from config
+const SERVICE_ADDRESS = "192.168.128.214"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
-const ConnectionRequestURL = "http://192.168.1.213:1050/cgi-bin/tr069/102024041800807"
+const ConnectionRequestURL = "http://10.51.64.4:7547/"
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;
@@ -499,10 +499,10 @@ function getUserInput(): void {
       if (request !== null) acsRequests.push(request)
     }
     else {
-      /*answer = keyInYN('Do you want to start with a Connection Request?\n')
+      answer = keyInYN('Do you want to start with a Connection Request?\n')
       if (answer){
         setTimeout(function(){httpConnectionRequest(ConnectionRequestURL, 3000)}, 1000)
-      }*/
+      }
       return
     }
   }
@@ -519,10 +519,16 @@ export async function httpConnectionRequest(address: string, timeout: number): P
   });
 
   let authHeader: {};
-  let username: string = "";
-  let password: string = "";
+  let username: string = "0000CA-TG3442S-8722D2822204024";
+  let password: string = "1uhmvapypxc";
+
+  let tries = 0;
 
   while (!authHeader || (username != null && password != null)) {
+    if(tries > 5) {
+      console.log("Tries exeded")
+      break;
+    }
     let opts = options;
     if (authHeader) {
       if (authHeader["method"] === "Digest") {
@@ -552,9 +558,13 @@ export async function httpConnectionRequest(address: string, timeout: number): P
     if (res.statusCode === 0)
       res = await httpGet(opts, timeout);
     if (res.statusCode === 0) throw new Error("Device is offline");
-    if (res.statusCode === 200 || res.statusCode === 204) return;
-
+    if (res.statusCode === 200 || res.statusCode === 204) {
+      console.log("it worked")
+      return;
+    }
     if (res.statusCode === 401 && res.headers["www-authenticate"]) {
+      tries ++;
+      console.log(res.headers["www-authenticate"])
       authHeader = auth.parseWwwAuthenticateHeader(res.headers["www-authenticate"]);
     } else {
       throw new Error(
