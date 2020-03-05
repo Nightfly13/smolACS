@@ -26,7 +26,7 @@ export function digest(
     nc?: string | Buffer
 ): string {
 
-    console.log("In Digest with params:")
+    /*console.log("In Digest with params:")
     console.log({
         "username":username,
         "realm": realm,
@@ -38,7 +38,7 @@ export function digest(
         "body": body,
         "cnonce": cnonce,
         "nc": nc
-    })
+    })*/
 
     const ha1: Hash = createHash("md5");  //create hash object
     ha1 //add elements listed below
@@ -83,7 +83,7 @@ export function digest(
 
     let res: string = hash.digest("hex");
 
-    console.log("Exiting Digest with val: " + res)
+    //console.log("Exiting Digest with val: " + res)
 
     return res; //return digest of final hash
 }
@@ -98,13 +98,13 @@ export function solveDigest(
     authHeader
 ): string {
 
-    console.log("In solveDigest with params:")
+    /*console.log("In solveDigest with params:")
     console.log({"username": username,
         "password": password,
         "uri": uri,
         "httpMethod": httpMethod,
         "body": body,
-        "authHeader":authHeader})
+        "authHeader":authHeader})*/
 
     const cnonce = randomBytes(8).toString("hex");
     const nc = "00000001";
@@ -139,7 +139,7 @@ export function solveDigest(
     if (authHeader.opaque) authString += `,opaque="${authHeader.opaque}"`;
 
 
-    console.log("Exiting solveDigest with value: " + authString)
+    //console.log("Exiting solveDigest with value: " + authString)
 
     return authString;
 }
@@ -152,8 +152,8 @@ export function parseWwwAuthenticateHeader(authHeader: string): {} {
     const res = { method: method };
     Object.assign(res, parseHeaderFeilds(authHeader.slice(method.length + 1)));
 
-    console.log("Exiting parseWwwAuthenticateHeader with value:")
-    console.log(res)
+    //console.log("Exiting parseWwwAuthenticateHeader with value:")
+    //console.log(res)
     return res;
 }
 
