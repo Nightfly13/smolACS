@@ -187,7 +187,7 @@ function parseHeaderFeilds(str: string): {} {
         if (!RegExp('^\s*"').test(value)) {//if it doesn't start with whitespace and "
             value = value.trim(); //set value equal to trimmed value
         } else {
-            while (!RegExp('[^\\]"\s*$').test(value)) { //while it doesn't end with \" 
+            while (!/[^\\]"\s*$/.test(value)) { //while it doesn't end with \" 
                 const p = parts.shift(); //get the next part
                 if (p == null) throw new Error("Unable to parse auth header"); //if p is null then throw an error
                 value += "," + p; //append comma and p to value
