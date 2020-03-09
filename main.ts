@@ -29,7 +29,7 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
 }
 
 const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "192.168.128.214"; // get interface from config
+const SERVICE_ADDRESS = "10.200.3.210"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
 const ConnectionRequestURL = "http://10.51.64.4:7547/"
