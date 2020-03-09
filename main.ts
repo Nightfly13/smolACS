@@ -7,7 +7,7 @@ import * as parseFuncs from "./parseFuncs"
 import * as soap from "./soap"
 import * as methods from "./methods"
 import * as utils from "./utils"
-import * as uifuncs from "./uifuncs"
+import * as uifuncs from "./uiFuncs"
 import * as auth from "./auth"
 import { parse } from "url"
 import { Readable } from "stream";
