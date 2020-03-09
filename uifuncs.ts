@@ -1,4 +1,4 @@
-import { extractValueType, parseBool } from "./parsefuncs"
+import { extractValueType, parseBool } from "./parseFuncs"
 import { SetParameterAttributesStruct, GetAcsRequest } from "./interfaces";
 import { question, keyInYN }  from 'readline-sync';
 

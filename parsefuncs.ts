@@ -1,5 +1,6 @@
 import { Attribute, Element } from "./interfaces"
-import { parse } from "querystring";
+import { keyInYN }  from 'readline-sync';
+
 const CHAR_SINGLE_QUOTE = 39;
 const CHAR_DOUBLE_QUOTE = 34;
 const CHAR_LESS_THAN = 60;
@@ -20,8 +21,14 @@ const STATE_DOUBLE_QUOTE = 3;
 
 export function extractValueType(value: boolean | string | number): string{
     if (parseBool((value as boolean | string)) !== null) return "xsd:boolean";
-    if (value == parseInt((value as string), 10)) return "xsd:int";
-    if (!isNaN(Date.parse((value as string)))) return "xsd:dateTime";
+    if (value == parseInt((value as string), 10)) {
+        if(value > 0) return "xsd:unsignedInt"
+        else return "xsd:int";
+    }
+
+    if (!isNaN(Date.parse((value as string)))) {
+        if(keyInYN("Is it a date?")) return "xsd:dateTime";
+    }
     return "xsd:string"
 }
 
