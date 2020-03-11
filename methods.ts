@@ -203,6 +203,11 @@ export function Inform(xml: Element): InformRequest {
     }
   }
 
+  console.info({ //logs stuff
+    message: "request event is " + evnt,
+    pid: process.pid,
+  });
+
   return {//return object with name, parameter list, device ID, event and retry counter 
     name: "Inform",
     parameterList: parameterList,

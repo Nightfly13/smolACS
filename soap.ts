@@ -104,9 +104,15 @@ export function request(body: string, cwmpVersion: string, warn: { message: stri
    */
 
   console.info({ //logs stuff
+    message: "Connection from " + rpc.id,
+    pid: process.pid,
+  });
+
+  console.info({ //logs stuff
     message: "request method is " + methodElement.localName,
     pid: process.pid,
   });
+
 
   if (!methodElement.localName.includes("Response")) sessionContext.cpeRequests.push(methodElement.localName)
 
