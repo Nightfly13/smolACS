@@ -168,6 +168,7 @@ function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statu
                 socket.setTimeout(timeout);
                 socket.on("timeout", () => {
                     req.abort();
+                    resolve({ statusCode: 0, headers: {} });
                 });
             });
     });
