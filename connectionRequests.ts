@@ -12,11 +12,11 @@ const xmppCpeID = "nalstrongap@tr069.com/102024041800381"
 
 export async function makeConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void> {
     try {
-        httpConnectionRequest(address, username, password, timeout)
+        await httpConnectionRequest(address, username, password, timeout)
     } catch (error) {
         if (error.name == 'NoResponseFromCpe') {
             console.log("trying xmpp");
-            xmppConnectionRequest(address, username, password)
+            await xmppConnectionRequest(address, username, password)
         }
         else {
             console.log("throwing error: " + error)
