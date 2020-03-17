@@ -15,9 +15,11 @@ export async function makeConnectionRequest(address: string, username: string, p
         httpConnectionRequest(address, username, password, timeout)
     } catch (error) {
         if (error.name == 'NoResponseFromCpe') {
+            console.log("trying xmpp");
             xmppConnectionRequest(address, username, password)
         }
         else {
+            console.log("throwing error: " + error)
             throw new Error(error.message)
         }
     }
