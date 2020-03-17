@@ -8,14 +8,13 @@ import * as soap from "./soap"
 import * as methods from "./methods"
 import * as utils from "./utils"
 import * as uifuncs from "./uiFuncs"
-import * as auth from "./auth"
-import { parse } from "url"
 import { Readable } from "stream";
 import { Socket } from "net";
 import { SessionContext, GetAcsRequest, SoapMessage, CpeGetResponse } from "./interfaces";
 import { resolve } from "path";
 import { readFileSync, existsSync } from "fs";
 import { question, keyInYN }  from 'readline-sync';
+import {makeConnectionRequest} from './connectionRequests'
 
 // Find project root directory
 export let ROOT_DIR = resolve(__dirname, "..");
@@ -33,6 +32,9 @@ const SERVICE_ADDRESS = "192.168.1.236"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
 const ConnectionRequestURL = "http://192.168.1.213:7547/cgi-bin/tr069/102024041800807"
+let ConReqUsername: string = "test"//"0000CA-TG3442S-8722D2822204024";
+let ConReqPassword: string = "123"//"1uhmvapypxc";
+
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;

@@ -6,8 +6,11 @@
   "dependencies": {
     "@types/node": "^13.1.8",
     "@types/readline-sync": "^1.4.3",
+    "@xmpp/client": "^0.11.1",
+    "bufferutil": "^4.0.1",
     "cluster": "^0.7.7",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+    "utf-8-validate": "^5.0.2"
   },
   "devDependencies": {},
   "scripts": {

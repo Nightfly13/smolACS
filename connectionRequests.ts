@@ -1,6 +1,27 @@
 import * as http from "http";
 import { parse } from "url"
 import * as auth from "./auth"
+import {client, xml} from '@xmpp/client'
+import { randomBytes } from "crypto";
+//import debug from '@xmpp/debug';
+
+const xmppServer = "10.200.3.210:5222"
+const xmppUsername = "xmpptest"
+const xmppPassword = "12341234"
+const xmppCpeID = "nalstrongap@tr069.com/102024041800381"
+
+export async function makeConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void>{
+    try {
+        httpConnectionRequest(address, username, password, timeout)
+    } catch (error) {
+        if(error.name == 'NoResponseFromCpe'){
+            xmppConnectionRequest(address, username, password)
+        }
+        else{
+            throw new Error(error.message)
+        }
+    }
+}
 
 async function httpConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void> {
     const options: http.RequestOptions = parse(address);
@@ -68,7 +89,69 @@ async function httpConnectionRequest(address: string, username: string, password
       };
 }
 
+async function xmppConnectionRequest(address: string, username: string, password: string): Promise<void>{
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
+    const xmpp = client({
+        service: `xmpp://${xmppServer}`,
+        resource: randomBytes(8).toString("hex"),
+        username: xmppUsername,
+        password: xmppPassword,
+      })
+      
+      //let gotRoster = false
+      
+      //debug(xmpp, true)
+      
+      xmpp.on('error', err => {
+        console.error(err)
+      })
+       
+      xmpp.on('offline', () => {
+        console.log('offline')
+      })
+       
+      xmpp.on('stanza', async stanza => {
+        if (stanza.is('message')) {
+          await xmpp.send(xml('presence', {type: 'unavailable'}))
+          await xmpp.stop()
+        }
+      })
+       
+      xmpp.on('online', async address => {
+        // Makes itself available
+        await xmpp.send(xml('presence'))
+       
+        /*let message = xml(
+          'iq',
+          {from: address, id: 'cr002', type: 'get'},
+          xml(
+            'query ',
+            {xmlns:'jabber:iq:roster'},
+            ''
+          )
+        )
+        //await xmpp.send(message)
+      
+        while (!gotRoster) {}*/
+        // Sends a chat message to itself
+        const message = xml(
+          'iq',
+          {from: address, to: xmppCpeID, id: 'cr001', type: 'get'},
+          xml(
+              'connectionRequest', 
+              {xmlns:"urn:broadband-forum-org:cwmp:xmppConnReq-1-0"}, 
+              [
+                  xml("username", {}, username),
+                  xml("password", {}, password)
+              ]
+          )
+        )
+        await xmpp.send(message)
+      })
+       
+      xmpp.start().catch(console.error)
+}
 
 function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statusCode: number; headers: {} }> {
     return new Promise((resolve, reject) => {
