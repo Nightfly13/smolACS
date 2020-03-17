@@ -1,7 +1,7 @@
 import * as http from "http";
 import { parse } from "url"
 import * as auth from "./auth"
-import {client, xml} from '@xmpp/client'
+import { client, xml } from '@xmpp/client'
 import { randomBytes } from "crypto";
 //import debug from '@xmpp/debug';
 
@@ -10,14 +10,14 @@ const xmppUsername = "xmpptest"
 const xmppPassword = "12341234"
 const xmppCpeID = "nalstrongap@tr069.com/102024041800381"
 
-export async function makeConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void>{
+export async function makeConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void> {
     try {
         httpConnectionRequest(address, username, password, timeout)
     } catch (error) {
-        if(error.name == 'NoResponseFromCpe'){
+        if (error.name == 'NoResponseFromCpe') {
             xmppConnectionRequest(address, username, password)
         }
-        else{
+        else {
             throw new Error(error.message)
         }
     }
@@ -61,7 +61,7 @@ async function httpConnectionRequest(address: string, username: string, password
                     options
                 );
             } else {
-                throw {name: 'UnrecognizedAuthMethod', message: 'Unrecognized auth method'};
+                throw { name: 'UnrecognizedAuthMethod', message: 'Unrecognized auth method' };
             }
         }
 
@@ -70,7 +70,7 @@ async function httpConnectionRequest(address: string, username: string, password
         // Workaround for some devices unexpectedly closing the connection
         if (res.statusCode === 0)
             res = await httpGet(opts, timeout);
-        if (res.statusCode === 0) throw {name: 'NoResponseFromCpe', message: 'Device is offline'};
+        if (res.statusCode === 0) throw { name: 'NoResponseFromCpe', message: 'Device is offline' };
         if (res.statusCode === 200 || res.statusCode === 204) {
             console.log("it worked")
             return;
@@ -80,16 +80,16 @@ async function httpConnectionRequest(address: string, username: string, password
             console.log(res.headers["www-authenticate"])
             authHeader = auth.parseWwwAuthenticateHeader(res.headers["www-authenticate"]);
         } else {
-            throw {name: 'UnrecognizedResponseCode', message: `Unexpected response code from device: ${res.statusCode}`};
+            throw { name: 'UnrecognizedResponseCode', message: `Unexpected response code from device: ${res.statusCode}` };
         }
     }
     throw {
         name: 'IncorrectCredentials',
         message: 'Incorrect connection request credentials'
-      };
+    };
 }
 
-async function xmppConnectionRequest(address: string, username: string, password: string): Promise<void>{
+async function xmppConnectionRequest(address: string, username: string, password: string): Promise<void> {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
     const xmpp = client({
@@ -97,31 +97,31 @@ async function xmppConnectionRequest(address: string, username: string, password
         resource: randomBytes(8).toString("hex"),
         username: xmppUsername,
         password: xmppPassword,
-      })
-      
-      //let gotRoster = false
-      
-      //debug(xmpp, true)
-      
-      xmpp.on('error', err => {
+    })
+
+    //let gotRoster = false
+
+    //debug(xmpp, true)
+
+    xmpp.on('error', err => {
         console.error(err)
-      })
-       
-      xmpp.on('offline', () => {
+    })
+
+    xmpp.on('offline', () => {
         console.log('offline')
-      })
-       
-      xmpp.on('stanza', async stanza => {
+    })
+
+    xmpp.on('stanza', async stanza => {
         if (stanza.is('message')) {
-          await xmpp.send(xml('presence', {type: 'unavailable'}))
-          await xmpp.stop()
+            await xmpp.send(xml('presence', { type: 'unavailable' }))
+            await xmpp.stop()
         }
-      })
-       
-      xmpp.on('online', async address => {
+    })
+
+    xmpp.on('online', async address => {
         // Makes itself available
         await xmpp.send(xml('presence'))
-       
+
         /*let message = xml(
           'iq',
           {from: address, id: 'cr002', type: 'get'},
@@ -136,21 +136,21 @@ async function xmppConnectionRequest(address: string, username: string, password
         while (!gotRoster) {}*/
         // Sends a chat message to itself
         const message = xml(
-          'iq',
-          {from: address, to: xmppCpeID, id: 'cr001', type: 'get'},
-          xml(
-              'connectionRequest', 
-              {xmlns:"urn:broadband-forum-org:cwmp:xmppConnReq-1-0"}, 
-              [
-                  xml("username", {}, username),
-                  xml("password", {}, password)
-              ]
-          )
+            'iq',
+            { from: address, to: xmppCpeID, id: 'cr001', type: 'get' },
+            xml(
+                'connectionRequest',
+                { xmlns: "urn:broadband-forum-org:cwmp:xmppConnReq-1-0" },
+                [
+                    xml("username", {}, username),
+                    xml("password", {}, password)
+                ]
+            )
         )
         await xmpp.send(message)
-      })
-       
-      xmpp.start().catch(console.error)
+    })
+
+    xmpp.start().catch(console.error)
 }
 
 function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statusCode: number; headers: {} }> {
@@ -162,7 +162,7 @@ function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statu
             })
             .on("error", err => {
                 req.abort();
-                reject(new Error("Device is offline"));
+                resolve({ statusCode: 0, headers: {} });
             })
             .on("socket", socket => {
                 socket.setTimeout(timeout);

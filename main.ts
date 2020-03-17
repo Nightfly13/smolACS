@@ -28,12 +28,12 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
 }
 
 const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "192.168.1.236"; // get interface from config
+const SERVICE_ADDRESS = "10.200.3.210" //"192.168.1.236"; // get interface from config
 const SERVICE_PORT = 7547; // get port from config
 
 const ConnectionRequestURL = "http://192.168.1.213:7547/cgi-bin/tr069/102024041800807"
-let ConReqUsername: string = "test"//"0000CA-TG3442S-8722D2822204024";
-let ConReqPassword: string = "123"//"1uhmvapypxc";
+let ConReqUsername: string = "ConReqUser"//"0000CA-TG3442S-8722D2822204024";
+let ConReqPassword: string = "12341234"//"1uhmvapypxc";
 
 
 let acsRequests: GetAcsRequest[] = [];
