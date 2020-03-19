@@ -3,7 +3,7 @@ import { parse } from "url"
 import * as auth from "./auth"
 import { client, xml } from '@xmpp/client'
 import { randomBytes } from "crypto";
-//import debug from '@xmpp/debug';
+//import * as debug from '@xmpp/debug';
 
 const xmppServer = "10.200.3.210:5222"
 const xmppUsername = "xmpptest"
