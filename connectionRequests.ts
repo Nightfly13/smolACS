@@ -96,7 +96,7 @@ async function xmppConnectionRequest(address: string, username: string, password
 
     const xmpp = client({
         service: `xmpp://${xmppServer}`,
-        resource: randomBytes(8).toString("hex"),
+        resource: "example", //randomBytes(8).toString("hex"),
         username: xmppUsername,
         password: xmppPassword,
     })
