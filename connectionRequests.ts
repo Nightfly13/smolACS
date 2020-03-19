@@ -120,9 +120,12 @@ async function xmppConnectionRequest(address: string, username: string, password
             await xmpp.send(xml('presence', { type: 'unavailable' }))
             await xmpp.stop()
         }
+        if(stanza.is('iq') && stanza.attrs.from == xmppCpeID &&  stanza.attrs.type == 'result'){
+            await xmpp.stop()
+        }
     })
 
-    xmpp.on('online', async address => {
+    xmpp.on('online', async (address: string) => {
         // Makes itself available
         await xmpp.send(xml('presence'))
 
