@@ -91,7 +91,7 @@ async function httpConnectionRequest(address: string, username: string, password
     };
 }
 
-let xmpp: any;
+let xmpp: import("@xmpp/client").XmppClient;
 
 async function xmppConnectionRequest(address: string, username: string, password: string): Promise<void> {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
@@ -118,10 +118,10 @@ async function xmppConnectionRequest(address: string, username: string, password
     xmpp.on('stanza', async stanza => {
         if (stanza.is('message')) {
             await xmpp.send(xml('presence', { type: 'unavailable' }))
-            await xmpp.stop()
+            xmpp.stop()
         }
         if(stanza.is('iq') && stanza.attrs.from == xmppCpeID &&  stanza.attrs.type == 'result'){
-            await xmpp.stop()
+            xmpp.stop()
         }
     })
 
@@ -156,7 +156,7 @@ async function xmppConnectionRequest(address: string, username: string, password
         )
         await xmpp.send(message)
     })
-    xmpp.start().catch(console.error)
+    xmpp.start()
 }
 
 export function xmppStop(): void{
