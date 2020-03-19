@@ -156,7 +156,7 @@ async function xmppConnectionRequest(address: string, username: string, password
         )
         await xmpp.send(message)
     })
-    xmpp.start()
+    xmpp.start().catch(console.error)
 }
 
 export function xmppStop(): void{

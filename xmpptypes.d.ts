@@ -11,7 +11,7 @@ declare module "@xmpp/client" {
     }): XmppClient;
 
     type XmppClient = EventEmitter & {
-        start: () => void,
+        start: () => Promise<void>,
         stop: () => void,
         send: (...args: any) => Promise<any>,
     }
