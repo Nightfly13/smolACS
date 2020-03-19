@@ -91,10 +91,12 @@ async function httpConnectionRequest(address: string, username: string, password
     };
 }
 
+let xmpp: any;
+
 async function xmppConnectionRequest(address: string, username: string, password: string): Promise<void> {
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
 
-    const xmpp = client({
+    xmpp = client({
         service: `xmpp://${xmppServer}`,
         resource: "example", //randomBytes(8).toString("hex"),
         username: xmppUsername,
@@ -151,8 +153,11 @@ async function xmppConnectionRequest(address: string, username: string, password
         )
         await xmpp.send(message)
     })
-
     xmpp.start().catch(console.error)
+}
+
+export function xmppStop(): void{
+    if(typeof xmpp.stop === 'function') xmpp.stop()
 }
 
 function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statusCode: number; headers: {} }> {

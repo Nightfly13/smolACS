@@ -14,7 +14,7 @@ import { SessionContext, GetAcsRequest, SoapMessage, CpeGetResponse } from "./in
 import { resolve } from "path";
 import { readFileSync, existsSync } from "fs";
 import { question, keyInYN }  from 'readline-sync';
-import {makeConnectionRequest} from './connectionRequests'
+import {makeConnectionRequest, xmppStop} from './connectionRequests'
 
 // Find project root directory
 export let ROOT_DIR = resolve(__dirname, "..");
@@ -71,6 +71,7 @@ if (!cluster.worker) { //If the current worker is master
       pid: process.pid
     });
 
+    xmppStop()
     cluster.stop();
   });
 
@@ -80,6 +81,7 @@ if (!cluster.worker) { //If the current worker is master
       pid: process.pid
     });
 
+    xmppStop()
     cluster.stop();
   });
 } else { //if current worker is not master
