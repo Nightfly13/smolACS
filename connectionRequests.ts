@@ -119,9 +119,11 @@ async function xmppConnectionRequest(address: string, username: string, password
         if (stanza.is('message')) {
             await xmpp.send(xml('presence', { type: 'unavailable' }))
             xmpp.stop()
+            return 
         }
         if(stanza.is('iq') && stanza.attrs.from == xmppCpeID &&  stanza.attrs.type == 'result'){
             xmpp.stop()
+            return
         }
     })
 
