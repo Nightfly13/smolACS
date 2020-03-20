@@ -3,7 +3,7 @@ import { parse } from "url"
 import * as auth from "./auth"
 import { client, xml } from '@xmpp/client'
 import { randomBytes } from "crypto";
-//import * as debug from '@xmpp/debug';
+import * as debug from '@xmpp/debug';
 
 const xmppServer = "10.200.3.210:5222"
 const xmppUsername = "xmpptest"
@@ -105,7 +105,7 @@ async function xmppConnectionRequest(address: string, username: string, password
 
     //let gotRoster = false
 
-    //debug(xmpp, true)
+    debug(xmpp, true)
 
     xmpp.on('error', err => {
         console.error(err)
@@ -162,7 +162,8 @@ async function xmppConnectionRequest(address: string, username: string, password
 }
 
 export function xmppStop(): void{
-    if(typeof xmpp.stop === 'function') xmpp.stop()
+    
+    if(typeof xmpp === 'object' && typeof xmpp.stop === 'function') xmpp.stop()
 }
 
 function httpGet(options: http.RequestOptions, timeout: number): Promise<{ statusCode: number; headers: {} }> {
