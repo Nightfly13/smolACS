@@ -72,6 +72,13 @@ function restartWorker(worker: { process: { pid: number; }; }, code: number, sig
   }, respawnTimestamp - now);
 }
 
+/**
+ * Create workers
+ * @param workerCount 
+ * @param servicePort 
+ * @param serviceAddress 
+ * @param acsRequests 
+ */
 export function start(workerCount: number, servicePort: number, serviceAddress: string, acsRequests?: GetAcsRequest[]): void {
   cluster.on("listening", (worker, address) => {
     if (
@@ -79,12 +86,6 @@ export function start(workerCount: number, servicePort: number, serviceAddress: 
       address.address === serviceAddress &&
       address.port === servicePort
     ) {
-      /*console.info({
-        message: "Worker listening",
-        pid: worker.process.pid,
-        address: address.address,
-        port: address.port
-      });*/
     }
   });
 
@@ -102,8 +103,9 @@ export function start(workerCount: number, servicePort: number, serviceAddress: 
 
   for (let i = 0; i < workerCount; ++i) fork();
 }
+
 /**
- * Tells the function to not restart worker and then kill worker
+ * Kills worker
  */
 export function stop(): void {
   cluster.removeListener("exit", restartWorker);

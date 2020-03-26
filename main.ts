@@ -27,16 +27,15 @@ while (!existsSync(`${ROOT_DIR}/package.json`)) {
   ROOT_DIR = d;
 }
 
-const VERSION = require('./package.json').version;
-const SERVICE_ADDRESS = "10.200.3.210" //"192.168.1.236"; // get interface from config
-const SERVICE_PORT = 7547; // get port from config
+const VERSION = require('./package.json').version;  // get version for logging
+const SERVICE_ADDRESS = "10.200.3.210";             // ip of ACS
+const SERVICE_PORT = 7547;                          // port to use for TR-069
 
 /*
 | Device      | Username                       | Password    |
 |-------------|--------------------------------|-------------|
 | StrongAP    | ConReqUser                     | 12341234    |
-| Technicolor | 0000CA-TG3442S-8722D2822204024 | 1uhmvapypxc |
-| Technicolor | broadcom                       |             |
+| Technicolor | broadcom                       | 12341234    |
 */
 
 const ConnectionRequestURL = "http://192.168.1.213:7547/cgi-bin/tr069/102024041800381" //"http://10.51.64.9:7547"
@@ -46,8 +45,9 @@ let ConReqPassword: string = "12341234"//"1uhmvapypxc";
 
 let acsRequests: GetAcsRequest[] = [];
 let server: http.Server | https.Server;
-const currentSessions = new WeakMap<Socket, SessionContext>();
-//#region 
+const currentSessions = new WeakMap<Socket, SessionContext>();  // WeakMap for storing sessions until they are ended
+
+//#region main program
 if (!cluster.worker) { //If the current worker is master
   const WORKER_COUNT = 1; //get worker count from config
 

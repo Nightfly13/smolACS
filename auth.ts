@@ -26,32 +26,19 @@ export function digest(
     nc?: string | Buffer
 ): string {
 
-    /*console.log("In Digest with params:")
-    console.log({
-        "username":username,
-        "realm": realm,
-        "password": password,
-        "nonce": nonce,
-        "httpMethod": httpMethod,
-        "uri":uri,
-        "qop": qop,
-        "body": body,
-        "cnonce": cnonce,
-        "nc": nc
-    })*/
+    // see details here: https://tools.ietf.org/html/rfc2069
 
     const ha1: Hash = createHash("md5");  //create hash object
-    ha1 //add elements listed below
+    ha1 //add elements to hash
         .update(username)
         .update(":")
         .update(realm)
         .update(":")
         .update(password);
-    // TODO support "MD5-sess" algorithm directive
-    const ha1d: string = ha1.digest("hex"); //get the digest
+    const ha1d: string = ha1.digest("hex"); //get the digest as hex
 
     const ha2: Hash = createHash("md5"); //create hash object
-    ha2 //add elements listed below
+    ha2 //add elements to hash
         .update(httpMethod)
         .update(":")
         .update(uri);
@@ -59,36 +46,43 @@ export function digest(
     if (qop === "auth-int") { //if qop equals "auth-int"
         const bodyHash = createHash("md5") //create hash object
             .update(body || "") //add body if specified
-            .digest("hex"); //get the digest
+            .digest("hex"); //get the digest as hex
         ha2.update(":").update(bodyHash); //add digest to ha2 hash
     }
 
-    const ha2d: string = ha2.digest("hex"); //get the digest
+    const ha2d: string = ha2.digest("hex"); //get the digest as hex
 
     const hash: Hash = createHash("md5"); //create hash object
-    hash
-        .update(ha1d) //add HA1's digest
+    hash //add elements to hash
+        .update(ha1d) 
         .update(":")
-        .update(nonce); //add server nonce
+        .update(nonce); 
     if (qop) { //if qop is defined (quality of protection)
-        hash
+        hash //add elements to hash
             .update(":")
-            .update(nc) //add request counter
+            .update(nc) 
             .update(":")
-            .update(cnonce) //add client nonce
+            .update(cnonce) 
             .update(":")
-            .update(qop); //add qop
+            .update(qop); 
     }
     hash.update(":").update(ha2d); //add HA2's digest
 
-    let res: string = hash.digest("hex");
+    let res: string = hash.digest("hex"); //get the digest as hex
 
-    //console.log("Exiting Digest with val: " + res)
 
     return res; //return digest of final hash
 }
 
-
+/**
+ * Generate authentication string for HTTP header 
+ * @param username 
+ * @param password 
+ * @param uri 
+ * @param httpMethod 
+ * @param body 
+ * @param authHeader 
+ */
 export function solveDigest(
     username: string | Buffer,
     password: string | Buffer,
@@ -98,18 +92,12 @@ export function solveDigest(
     authHeader
 ): string {
 
-    /*console.log("In solveDigest with params:")
-    console.log({"username": username,
-        "password": password,
-        "uri": uri,
-        "httpMethod": httpMethod,
-        "body": body,
-        "authHeader":authHeader})*/
+    // see details here: https://tools.ietf.org/html/rfc2069
 
     const cnonce = randomBytes(8).toString("hex");
     const nc = "00000001";
 
-    let qop;
+    let qop: string;
     if (authHeader.qop) {
         if (authHeader.qop.indexOf(",") !== -1) qop = "auth";
         // Either auth or auth-int, prefer auth
@@ -139,40 +127,27 @@ export function solveDigest(
     if (authHeader.opaque) authString += `,opaque="${authHeader.opaque}"`;
 
 
-    //console.log("Exiting solveDigest with value: " + authString)
-
     return authString;
 }
 
-
-
+/**
+ * Parse Www-Authenticate header into a more manageable object
+ * @param authHeader 
+ */
 export function parseWwwAuthenticateHeader(authHeader: string): {} {
     authHeader = authHeader.trim();
     const method = authHeader.split(" ", 1)[0];
     const res = { method: method };
     Object.assign(res, parseHeaderFeilds(authHeader.slice(method.length + 1)));
 
-    //console.log("Exiting parseWwwAuthenticateHeader with value:")
-    //console.log(res)
     return res;
 }
-
 
 /**
 * Return object with header fields and values 
 * @param str header fields as string
 */
 function parseHeaderFeilds(str: string): {} {
-    //example input:
-    //username="Mufasa",
-    //realm="testrealm@host.com",
-    //nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
-    //uri="/dir/index.html",
-    //qop=auth,
-    //nc=00000001,
-    //cnonce="0a4f113b",
-    //response="6629fae49393a05397450978507c4ef1",
-    //opaque="5ccc069c403ebaf9f0171e9517f40e41"
     const res = {};
     const parts = str.split(","); //split string into name and value pairs based on commas
     let part: string;

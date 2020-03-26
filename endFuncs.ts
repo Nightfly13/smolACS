@@ -33,6 +33,7 @@ function kill(process: ChildProcess): Promise<void> {
       }, 100);
     });
   }
+  
 /**
  * kill all active processes
  */

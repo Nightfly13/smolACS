@@ -5,11 +5,18 @@ import { client, xml } from '@xmpp/client'
 import { randomBytes } from "crypto";
 import * as debug from '@xmpp/debug';
 
-const xmppServer = "10.200.3.210:5222"
-const xmppUsername = "xmpptest"
-const xmppPassword = "12341234"
-const xmppCpeID = "nalstrongap@tr069.com/102024041800381"
+const xmppServer = "10.200.3.210:5222"                      // url of xmpp server
+const xmppUsername = "xmpptest"                             // username for ACS on xmpp server
+const xmppPassword = "12341234"                             // password for ACS on xmpp server
+const xmppCpeID = "nalstrongap@tr069.com/102024041800381"   // ID of CPE on xmpp server
 
+/**
+ * Will try HTTP ConReq first, if no answer then tries XMPP
+ * @param address 
+ * @param username 
+ * @param password 
+ * @param timeout 
+ */
 export async function makeConnectionRequest(address: string, username: string, password: string, timeout: number): Promise<void> {
     try {
         await httpConnectionRequest(address, username, password, timeout)
@@ -41,7 +48,7 @@ async function httpConnectionRequest(address: string, username: string, password
 
     while (!authHeader || (username != null && password != null)) {
         if (tries > 5) {
-            console.log("Tries exeded")
+            console.log("Tries exceeded")
             break;
         }
         let opts = options;
@@ -105,7 +112,8 @@ async function xmppConnectionRequest(address: string, username: string, password
 
     //let gotRoster = false
 
-    debug(xmpp, true)
+    //Uncomment if debugging
+    //debug(xmpp, true)
 
     xmpp.on('error', err => {
         console.error(err)
@@ -131,19 +139,13 @@ async function xmppConnectionRequest(address: string, username: string, password
         // Makes itself available
         await xmpp.send(xml('presence'))
 
-        /*let message = xml(
-          'iq',
-          {from: address, id: 'cr002', type: 'get'},
-          xml(
-            'query ',
-            {xmlns:'jabber:iq:roster'},
-            ''
-          )
-        )
-        //await xmpp.send(message)
-      
-        while (!gotRoster) {}*/
-        // Sends a chat message to itself
+        /*
+        TO-DO: autodetect CPE resource
+        let message = xml('iq', {from: address, id: 'cr002', type: 'get'}, xml('query ', {xmlns:'jabber:iq:roster'}, ''))
+        await xmpp.send(message)
+        while (!gotRoster) {}
+        */
+
         const message = xml(
             'iq',
             { from: address, to: xmppCpeID, id: 'cr001', type: 'get' },
